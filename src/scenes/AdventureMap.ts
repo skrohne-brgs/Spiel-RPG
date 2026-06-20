@@ -48,12 +48,7 @@ export class AdventureMap extends Phaser.Scene {
   // ── Map rendering ─────────────────────────────────────────────────────────
 
   private renderMap(): void {
-    for (let row = 0; row < MAP_ROWS; row++) {
-      for (let col = 0; col < MAP_COLS; col++) {
-        const t = MAP_TILES[row][col];
-        this.add.image(col * TILE_SIZE + 24, row * TILE_SIZE + 24, `tile_${t}`);
-      }
-    }
+    this.add.image(MAP_W / 2, GAME_HEIGHT / 2, 'map_base').setDepth(0);
   }
 
   private renderCities(): void {
