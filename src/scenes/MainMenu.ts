@@ -7,93 +7,64 @@ export class MainMenu extends Phaser.Scene {
   create(): void {
     const cx = GAME_WIDTH / 2;
 
-    // Starfield background
-    for (let i = 0; i < 200; i++) {
-      const x = Phaser.Math.Between(0, GAME_WIDTH);
-      const y = Phaser.Math.Between(0, GAME_HEIGHT);
-      const r = Math.random() < 0.1 ? 2 : 1;
-      const a = 0.4 + Math.random() * 0.6;
-      this.add.circle(x, y, r, 0xffffff, a);
+    // Starfield
+    for (let i = 0; i < 220; i++) {
+      const s = Math.random() < 0.08 ? 2 : 1;
+      this.add.circle(
+        Phaser.Math.Between(0, GAME_WIDTH), Phaser.Math.Between(0, GAME_HEIGHT),
+        s, 0xffffff, 0.2 + Math.random() * 0.8,
+      );
     }
 
-    // Dark sea horizon
-    const horizon = this.add.graphics();
-    horizon.fillGradientStyle(0x0d0d2a, 0x0d0d2a, 0x1a2a4a, 0x1a2a4a, 1);
-    horizon.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    horizon.setAlpha(0.6);
+    // Gradient overlay
+    const ov = this.add.graphics();
+    ov.fillGradientStyle(0x0d0d2a, 0x0d0d2a, 0x0a1a0a, 0x0a1a0a, 0.7);
+    ov.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     // Title
-    this.add.text(cx, 140, 'MITTELERDE', {
-      fontSize: '64px',
-      fontFamily: 'Georgia, serif',
-      color: '#c8a040',
-      stroke: '#3a2000',
-      strokeThickness: 6,
+    this.add.text(cx, 130, 'MITTELERDE', {
+      fontSize: '68px', fontFamily: 'Georgia, serif', color: '#c8a040',
+      stroke: '#3a2000', strokeThickness: 6,
     }).setOrigin(0.5);
 
-    this.add.text(cx, 210, 'Erben des Zweiten Zeitalters', {
-      fontSize: '28px',
-      fontFamily: 'Georgia, serif',
-      color: '#a08040',
-      stroke: '#1a0a00',
-      strokeThickness: 3,
+    this.add.text(cx, 208, 'Erben des Zweiten Zeitalters', {
+      fontSize: '28px', fontFamily: 'Georgia, serif', color: '#a08040',
     }).setOrigin(0.5);
 
-    // Decorative line
     const line = this.add.graphics();
-    line.lineStyle(1, 0xc8a040, 0.6);
-    line.lineBetween(cx - 280, 250, cx + 280, 250);
+    line.lineStyle(1, 0xc8a040, 0.5);
+    line.lineBetween(cx - 300, 250, cx + 300, 250);
 
-    // Lore text
+    // Lore
     this.add.text(cx, 320, [
-      'Númenor ist versunken. Saurons Schatten breitet sich über Mittelerde aus.',
-      'Du bist Elendil, Fürst von Andúnië, einziger Überlebender des Untergangs.',
-      'Führe dein Volk durch Eriador und schmiede die Letzte Allianz.',
+      'Númenor ist versunken. Elendil landet mit den Überlebenden in Mittelerde.',
+      'Saurons Schatten breitet sich über Eriador aus.',
+      'Führe deinen Helden durch eine feindliche Welt.',
+      'Schmiede die Letzte Allianz.',
     ].join('\n'), {
-      fontSize: '18px',
-      fontFamily: 'Georgia, serif',
-      color: '#c0b090',
-      align: 'center',
-      lineSpacing: 8,
+      fontSize: '17px', fontFamily: 'Georgia, serif', color: '#c0b090',
+      align: 'center', lineSpacing: 8,
     }).setOrigin(0.5);
 
-    // Start button
+    // Feature bullets
+    this.add.text(cx, 440, '⚔ Rundenbasiertes Kampfsystem   •   ✦ Zauber & Magie   •   🏰 Städte & Ressourcen', {
+      fontSize: '14px', color: '#806040',
+    }).setOrigin(0.5);
+
+    // New game button
     const btnBg = this.add.graphics();
     btnBg.fillStyle(0x3a2810, 1);
     btnBg.lineStyle(2, 0xc8a040, 1);
-    btnBg.fillRoundedRect(cx - 120, 430, 240, 55, 8);
-    btnBg.strokeRoundedRect(cx - 120, 430, 240, 55, 8);
-
-    const btnText = this.add.text(cx, 457, 'NEUES SPIEL', {
-      fontSize: '22px',
-      fontFamily: 'Georgia, serif',
-      color: '#ffd060',
+    btnBg.fillRoundedRect(cx - 130, 480, 260, 56, 8);
+    btnBg.strokeRoundedRect(cx - 130, 480, 260, 56, 8);
+    const btnTxt = this.add.text(cx, 508, 'NEUES SPIEL', {
+      fontSize: '24px', fontFamily: 'Georgia, serif', color: '#ffd060',
     }).setOrigin(0.5);
+    const zone = this.add.zone(cx, 508, 260, 56).setInteractive({ cursor: 'pointer' });
+    zone.on('pointerover', () => { btnBg.clear(); btnBg.fillStyle(0x5a3c18, 1).lineStyle(2, 0xffd060, 1).fillRoundedRect(cx - 130, 480, 260, 56, 8).strokeRoundedRect(cx - 130, 480, 260, 56, 8); btnTxt.setColor('#ffffff'); });
+    zone.on('pointerout',  () => { btnBg.clear(); btnBg.fillStyle(0x3a2810, 1).lineStyle(2, 0xc8a040, 1).fillRoundedRect(cx - 130, 480, 260, 56, 8).strokeRoundedRect(cx - 130, 480, 260, 56, 8); btnTxt.setColor('#ffd060'); });
+    zone.on('pointerdown', () => this.scene.start('HeroSelectScene'));
 
-    // Hover effect
-    const hitArea = this.add.zone(cx, 457, 240, 55).setInteractive({ cursor: 'pointer' });
-    hitArea.on('pointerover', () => {
-      btnBg.clear();
-      btnBg.fillStyle(0x5a3c18, 1);
-      btnBg.lineStyle(2, 0xffd060, 1);
-      btnBg.fillRoundedRect(cx - 120, 430, 240, 55, 8);
-      btnBg.strokeRoundedRect(cx - 120, 430, 240, 55, 8);
-      btnText.setColor('#ffffff');
-    });
-    hitArea.on('pointerout', () => {
-      btnBg.clear();
-      btnBg.fillStyle(0x3a2810, 1);
-      btnBg.lineStyle(2, 0xc8a040, 1);
-      btnBg.fillRoundedRect(cx - 120, 430, 240, 55, 8);
-      btnBg.strokeRoundedRect(cx - 120, 430, 240, 55, 8);
-      btnText.setColor('#ffd060');
-    });
-    hitArea.on('pointerdown', () => this.scene.start('AdventureMap'));
-
-    // Version
-    this.add.text(GAME_WIDTH - 10, GAME_HEIGHT - 10, 'v0.1 – PoC', {
-      fontSize: '12px',
-      color: '#504030',
-    }).setOrigin(1, 1);
+    this.add.text(GAME_WIDTH - 10, GAME_HEIGHT - 10, 'v0.2', { fontSize: '12px', color: '#404030' }).setOrigin(1, 1);
   }
 }

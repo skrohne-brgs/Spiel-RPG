@@ -1,0 +1,56 @@
+import type { HeroData } from '../types';
+
+export const HERO_DEFS: HeroData[] = [
+  {
+    id: 'elendil',
+    name: 'Elendil',
+    title: 'Fürst von Andúnië · Erster König von Arnor',
+    attack: 3, defense: 3, knowledge: 3, leadership: 5,
+    level: 1, experience: 0,
+    mana: 30, maxMana: 30, spellPower: 2,
+    skills: { leadership: 1 },
+    spells: ['healing', 'bless', 'mass_haste'],
+    artifacts: [],
+    startingArmy: [
+      { unitId: 'numenorean_warrior', count: 10 },
+      { unitId: 'numenorean_archer',  count: 5  },
+    ],
+    lore: 'Ausgewogener Heerführer. Sein Führungstalent stärkt die Kampfmoral aller Einheiten.',
+    color: 0xc8a040,
+  },
+  {
+    id: 'isildur',
+    name: 'Isildur',
+    title: 'Sohn Elendils · Mitgründer von Gondor',
+    attack: 5, defense: 2, knowledge: 2, leadership: 3,
+    level: 1, experience: 0,
+    mana: 20, maxMana: 20, spellPower: 2,
+    skills: { offense: 1 },
+    spells: ['lightning_bolt', 'fire_storm', 'mass_haste'],
+    artifacts: [],
+    startingArmy: [
+      { unitId: 'numenorean_warrior', count: 15 },
+      { unitId: 'dunedain_ranger',    count: 3  },
+    ],
+    lore: 'Aggressiver Krieger. Hoher Angriff, aber geringere Verteidigung. Bevorzugt Offensivzauber.',
+    color: 0xc03030,
+  },
+  {
+    id: 'anarion',
+    name: 'Anárion',
+    title: 'Sohn Elendils · Herr von Minas Anor',
+    attack: 2, defense: 5, knowledge: 3, leadership: 3,
+    level: 1, experience: 0,
+    mana: 30, maxMana: 30, spellPower: 3,
+    skills: { resistance: 1 },
+    spells: ['healing', 'slow', 'bless'],
+    artifacts: [],
+    startingArmy: [
+      { unitId: 'numenorean_warrior', count: 8  },
+      { unitId: 'numenorean_archer',  count: 5  },
+      { unitId: 'elven_warrior',      count: 3  },
+    ],
+    lore: 'Defensiver Stratege. Starke Magie und Verteidigung. Ideal für geduldige Spieler.',
+    color: 0x4080c0,
+  },
+];

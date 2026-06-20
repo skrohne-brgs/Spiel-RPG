@@ -1,0 +1,32 @@
+export interface ArtifactDef {
+  id: string;
+  name: string;
+  description: string;
+  tileX: number;
+  tileY: number;
+  bonuses: { attack?: number; defense?: number; knowledge?: number; maxMana?: number; spellPower?: number };
+  icon: string;
+}
+
+export const ARTIFACTS: ArtifactDef[] = [
+  {
+    id: 'narsil_shard', name: 'Scherbe von Narsil', icon: '🗡',
+    description: '+3 Angriff. Die zerbrochene Klinge Elendils – noch immer gefährlich.',
+    tileX: 8, tileY: 6, bonuses: { attack: 3 },
+  },
+  {
+    id: 'ring_barahir', name: 'Ring von Barahir', icon: '💍',
+    description: '+2 Verteidigung. Symbol von Barahirs Eid an Finrod Felagund.',
+    tileX: 14, tileY: 9, bonuses: { defense: 2 },
+  },
+  {
+    id: 'elendilmir', name: 'Elendilmir', icon: '⭐',
+    description: '+20 Mana. Der Stern von Andúnië – ein weißer Edelstein Elendils.',
+    tileX: 13, tileY: 4, bonuses: { maxMana: 20 },
+  },
+  {
+    id: 'mithril_armor', name: 'Mithril-Rüstung', icon: '🛡',
+    description: '+3 Verteidigung und +1 Zauberstärke. Aus Erebors Mithril geschmiedet.',
+    tileX: 6, tileY: 11, bonuses: { defense: 3, spellPower: 1 },
+  },
+];
