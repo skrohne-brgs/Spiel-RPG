@@ -27,6 +27,15 @@ export const TILE_CONFIG: Record<number, { name: string; color: number; walkable
   [T.TOWN]:      { name: 'Stadt',    color: 0x3a3a5a, walkable: true,  moveCost: 1   },
 };
 
+// ── Hex grid constants (pointy-top, odd-r offset) ─────────────────────────────
+export const HEX_SIZE   = 27;                         // circumradius (vertex→centre)
+export const HEX_W      = Math.sqrt(3) * HEX_SIZE;   // ≈46.77  (hex width)
+export const HEX_H      = 2 * HEX_SIZE;              // 54      (hex height)
+export const HEX_ROW_H  = 1.5 * HEX_SIZE;            // 40.5    (row spacing)
+// Vertically centre the hex grid inside the 720 px map area.
+// Grid height = (MAP_ROWS-1)*HEX_ROW_H + HEX_H = 14*40.5 + 54 = 621 px
+export const HEX_OFFSET_Y = Math.round((GAME_HEIGHT - ((MAP_ROWS - 1) * HEX_ROW_H + HEX_H)) / 2); // ≈50
+
 export const COMBAT_COLS = 12; // 6 per side
 export const COMBAT_ROWS = 5;
 export const COMBAT_CELL_W = 80;
