@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import {
   GAME_WIDTH, GAME_HEIGHT,
-  COMBAT_COLS, COMBAT_ROWS, COMBAT_CELL_W, COMBAT_CELL_H, COMBAT_GRID_X, COMBAT_GRID_Y,
 } from '../constants';
 import { UNIT_DEFS } from '../data/units';
 import { SPELL_DEFS } from '../data/spells';
@@ -9,6 +8,17 @@ import type { SpellDef, SpellTarget } from '../data/spells';
 import { state, defeatEnemy, gainExperience } from '../GameState';
 import type { EnemyEncounter, CombatStack } from '../types';
 import { music } from '../audio/ChiptuneEngine';
+
+// ── Hexagonal combat grid (pointy-top, odd-r offset) ────────────────────────
+const HX_SIZE = 34;                      // hex circumradius
+const HX_W    = Math.sqrt(3) * HX_SIZE;  // hex width ≈ 58.9
+const HX_COLS = 11;                      // grid columns
+const HX_ROWS = 7;                       // grid rows
+const HX_GRID_W = (HX_COLS + 0.5) * HX_W;
+const HX_GRID_X = Math.round((GAME_WIDTH - HX_GRID_W) / 2);
+const HX_GRID_Y = 70;
+const HX_ROW_H  = 1.5 * HX_SIZE;         // vertical row spacing
+const HX_GRID_H = HX_ROWS * HX_ROW_H;    // overall vertical extent
 
 type Phase = 'select_unit' | 'unit_moved' | 'spell_select' | 'spell_target';
 
@@ -60,6 +70,7 @@ export class CombatScene extends Phaser.Scene {
     this.buildQueue();
     this.hlGraphics = this.add.graphics().setDepth(20);
     this.createUI();
+    this.setupGridInput();
     this.renderAll();
     this.startTurn();
   }
@@ -80,50 +91,60 @@ export class CombatScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Divider
-    const mid = COMBAT_GRID_X + (COMBAT_COLS / 2) * COMBAT_CELL_W;
+    const mid = HX_GRID_X + (HX_COLS / 2) * HX_W;
     this.add.graphics()
       .lineStyle(2, 0xff4040, 0.35)
-      .lineBetween(mid, COMBAT_GRID_Y, mid, COMBAT_GRID_Y + COMBAT_ROWS * COMBAT_CELL_H);
+      .lineBetween(mid, HX_GRID_Y, mid, HX_GRID_Y + HX_GRID_H);
 
-    this.add.text(mid - 80, COMBAT_GRID_Y - 18, 'NÚMENOR', { fontSize: '13px', color: '#4a78c0' });
-    this.add.text(mid + 14, COMBAT_GRID_Y - 18, 'FEINDE',  { fontSize: '13px', color: '#cc4444' });
+    this.add.text(mid - 80, HX_GRID_Y - 18, 'NÚMENOR', { fontSize: '13px', color: '#4a78c0' });
+    this.add.text(mid + 14, HX_GRID_Y - 18, 'FEINDE',  { fontSize: '13px', color: '#cc4444' });
   }
 
   private drawGrid(): void {
     const g = this.add.graphics().setDepth(1);
-    for (let r = 0; r < COMBAT_ROWS; r++) {
-      for (let c = 0; c < COMBAT_COLS; c++) {
-        const x = COMBAT_GRID_X + c * COMBAT_CELL_W;
-        const y = COMBAT_GRID_Y + r * COMBAT_CELL_H;
-        g.fillStyle(c < COMBAT_COLS / 2 ? 0x0a1420 : 0x200a0a, 0.7);
-        g.fillRect(x + 1, y + 1, COMBAT_CELL_W - 2, COMBAT_CELL_H - 2);
+    for (let r = 0; r < HX_ROWS; r++) {
+      for (let c = 0; c < HX_COLS; c++) {
+        const { x, y } = this.cell(c, r);
+        const pts = this.hexPts(x, y, HX_SIZE - 1);
+        g.fillStyle(c < HX_COLS / 2 ? 0x0a1420 : 0x200a0a, 0.7);
+        g.fillPoints(pts, true);
         g.lineStyle(1, 0x2a2010, 0.5);
-        g.strokeRect(x, y, COMBAT_CELL_W, COMBAT_CELL_H);
+        g.strokePoints(pts, true);
       }
     }
   }
 
   private spawnUnits(): void {
-    let pid = 0;
-    state.playerArmy.forEach((stack, i) => {
+    // Player formation on the left (cols 0/1), enemy mirrored on the right.
+    const playerSlots: [number, number][] = [
+      [0, 1], [1, 2], [0, 3], [1, 4], [0, 5], [1, 0], [0, 6],
+    ].map(([c, r]) => [c, Math.min(r, HX_ROWS - 1)]);
+    const enemySlots: [number, number][] = playerSlots.map(([c, r]) => [HX_COLS - 1 - c, r]);
+
+    let pid = 0, pslot = 0;
+    state.playerArmy.forEach(stack => {
       if (stack.count <= 0) return;
       const tacBonus = state.hero.skills['tactics'] ?? 0;
+      const [gx, gy] = playerSlots[pslot % playerSlots.length];
+      pslot++;
       this.units.push({
         ...stack,
         speed: stack.speed + tacBonus,
-        gridX: 1, gridY: Math.min(i, COMBAT_ROWS - 1),
+        gridX: gx, gridY: gy,
         hasActed: false, blessed: false, slowed: false, slowedTurns: 0,
         cid: `p_${pid++}_${stack.id}`,
       });
     });
 
-    let eid = 0;
-    this.encounter.stacks.forEach(({ unitId, count }, i) => {
+    let eid = 0, eslot = 0;
+    this.encounter.stacks.forEach(({ unitId, count }) => {
       const def = UNIT_DEFS[unitId];
       if (!def) return;
+      const [gx, gy] = enemySlots[eslot % enemySlots.length];
+      eslot++;
       this.units.push({
         ...def, count, currentHp: def.maxHp,
-        gridX: COMBAT_COLS - 2, gridY: Math.min(i, COMBAT_ROWS - 1),
+        gridX: gx, gridY: gy,
         hasActed: false, blessed: false, slowed: false, slowedTurns: 0,
         cid: `e_${eid++}_${def.id}`,
       });
@@ -137,8 +158,10 @@ export class CombatScene extends Phaser.Scene {
 
   // ── UI ────────────────────────────────────────────────────────────────────
 
+  private panelY(): number { return HX_GRID_Y + HX_GRID_H + 10; }
+
   private createUI(): void {
-    const py = COMBAT_GRID_Y + COMBAT_ROWS * COMBAT_CELL_H + 10;
+    const py = this.panelY();
     const ph = GAME_HEIGHT - py - 8;
 
     this.add.graphics().setDepth(5).fillStyle(0x0a0505, 0.92)
@@ -180,7 +203,7 @@ export class CombatScene extends Phaser.Scene {
     if (canSpell) {
       const [bg, txt] = this.makeContainer(0, 0, 120, 32, 'ZAUBER', 0x1a1050);
       this.actionPanel.add([bg, txt]);
-      const z = this.add.zone(GAME_WIDTH - 290 + 60, 10 + (COMBAT_GRID_Y + COMBAT_ROWS * COMBAT_CELL_H) + 16, 120, 32)
+      const z = this.add.zone(GAME_WIDTH - 290 + 60, 10 + this.panelY() + 16, 120, 32)
         .setInteractive({ cursor: 'pointer' }).setDepth(11);
       z.on('pointerdown', () => this.openSpellMenu());
     }
@@ -188,7 +211,7 @@ export class CombatScene extends Phaser.Scene {
     if (canWait) {
       const [bg, txt] = this.makeContainer(130, 0, 120, 32, 'WARTEN', 0x1a2810);
       this.actionPanel.add([bg, txt]);
-      const py = COMBAT_GRID_Y + COMBAT_ROWS * COMBAT_CELL_H + 10;
+      const py = this.panelY();
       const z = this.add.zone(GAME_WIDTH - 290 + 130 + 60, py + 16, 120, 32)
         .setInteractive({ cursor: 'pointer' }).setDepth(11);
       z.on('pointerdown', () => this.skipTurn());
@@ -228,11 +251,47 @@ export class CombatScene extends Phaser.Scene {
 
   // ── Rendering ─────────────────────────────────────────────────────────────
 
+  // center pixel of hex cell (gx=col, gy=row)
   private cell(gx: number, gy: number): { x: number; y: number } {
     return {
-      x: COMBAT_GRID_X + gx * COMBAT_CELL_W + COMBAT_CELL_W / 2,
-      y: COMBAT_GRID_Y + gy * COMBAT_CELL_H + COMBAT_CELL_H / 2,
+      x: HX_GRID_X + (gx + (gy % 2 === 1 ? 1 : 0.5)) * HX_W,
+      y: HX_GRID_Y + gy * 1.5 * HX_SIZE + HX_SIZE,
     };
+  }
+
+  private hexNeighbors(col: number, row: number): [number, number][] {
+    const odd = row % 2 === 1;
+    return ([
+      [col - 1, row], [col + 1, row],
+      [col + (odd ? 0 : -1), row - 1], [col + (odd ? 1 : 0), row - 1],
+      [col + (odd ? 0 : -1), row + 1], [col + (odd ? 1 : 0), row + 1],
+    ] as [number, number][]).filter(([c, r]) => c >= 0 && c < HX_COLS && r >= 0 && r < HX_ROWS);
+  }
+
+  // cube-coordinate hex distance for odd-r offset
+  private hexDist(c1: number, r1: number, c2: number, r2: number): number {
+    const q1 = c1 - ((r1 - (r1 & 1)) >> 1), q2 = c2 - ((r2 - (r2 & 1)) >> 1);
+    return (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs((-q1 - r1) - (-q2 - r2))) / 2;
+  }
+
+  // 6 polygon points for a pointy-top hex
+  private hexPts(cx: number, cy: number, r: number): { x: number; y: number }[] {
+    return Array.from({ length: 6 }, (_, i) => {
+      const a = (Math.PI / 3) * i - Math.PI / 2;
+      return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    });
+  }
+
+  // pixel -> nearest hex cell (or null if outside grid)
+  private pixelToHex(px: number, py: number): [number, number] | null {
+    let best = Infinity, bc = -1, br = -1;
+    for (let r = 0; r < HX_ROWS; r++)
+      for (let c = 0; c < HX_COLS; c++) {
+        const { x, y } = this.cell(c, r);
+        const d = (px - x) ** 2 + (py - y) ** 2;
+        if (d < best) { best = d; bc = c; br = r; }
+      }
+    return best < HX_W * HX_W ? [bc, br] : null;
   }
 
   private renderAll(): void { this.units.forEach(u => this.renderUnit(u)); }
@@ -372,45 +431,31 @@ export class CombatScene extends Phaser.Scene {
     if (!u) return;
 
     // Active unit border (white pulse)
-    const { x, y } = this.cell(u.gridX, u.gridY);
+    const ac = this.cell(u.gridX, u.gridY);
     this.hlGraphics.lineStyle(3, 0xffffff, 0.85);
-    this.hlGraphics.strokeRect(
-      COMBAT_GRID_X + u.gridX * COMBAT_CELL_W + 2,
-      COMBAT_GRID_Y + u.gridY * COMBAT_CELL_H + 2,
-      COMBAT_CELL_W - 4, COMBAT_CELL_H - 4,
-    );
+    this.hlGraphics.strokePoints(this.hexPts(ac.x, ac.y, HX_SIZE - 2), true);
 
     if (u.faction !== 'player') return;
 
     if (this.phase === 'select_unit') {
       // Show moveable cells (blue)
       this.reachableCells(u.gridX, u.gridY, u.moveRange).forEach(([c, r]) => {
+        const { x, y } = this.cell(c, r);
         this.hlGraphics.fillStyle(0x3080ff, 0.28);
-        this.hlGraphics.fillRect(
-          COMBAT_GRID_X + c * COMBAT_CELL_W + 2,
-          COMBAT_GRID_Y + r * COMBAT_CELL_H + 2,
-          COMBAT_CELL_W - 4, COMBAT_CELL_H - 4,
-        );
+        this.hlGraphics.fillPoints(this.hexPts(x, y, HX_SIZE - 2), true);
       });
       // Attackable enemies (orange)
       this.attackableEnemies(u).forEach(enemy => {
         const ec = this.cell(enemy.gridX, enemy.gridY);
         this.hlGraphics.lineStyle(3, 0xff8000, 0.9);
-        this.hlGraphics.strokeRect(
-          COMBAT_GRID_X + enemy.gridX * COMBAT_CELL_W + 2,
-          COMBAT_GRID_Y + enemy.gridY * COMBAT_CELL_H + 2,
-          COMBAT_CELL_W - 4, COMBAT_CELL_H - 4,
-        );
+        this.hlGraphics.strokePoints(this.hexPts(ec.x, ec.y, HX_SIZE - 2), true);
       });
     } else if (this.phase === 'unit_moved') {
       // Only show attackable from new position
       this.attackableEnemies(u).forEach(enemy => {
+        const ec = this.cell(enemy.gridX, enemy.gridY);
         this.hlGraphics.lineStyle(3, 0xff8000, 0.9);
-        this.hlGraphics.strokeRect(
-          COMBAT_GRID_X + enemy.gridX * COMBAT_CELL_W + 2,
-          COMBAT_GRID_Y + enemy.gridY * COMBAT_CELL_H + 2,
-          COMBAT_CELL_W - 4, COMBAT_CELL_H - 4,
-        );
+        this.hlGraphics.strokePoints(this.hexPts(ec.x, ec.y, HX_SIZE - 2), true);
       });
     } else if (this.phase === 'spell_target') {
       // Target highlights set elsewhere
@@ -423,9 +468,7 @@ export class CombatScene extends Phaser.Scene {
     const queue: Array<[number, number, number]> = [[startX, startY, 0]];
     while (queue.length > 0) {
       const [cx, cy, cost] = queue.shift()!;
-      for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-        const nx = cx + dx, ny = cy + dy;
-        if (nx < 0 || nx >= COMBAT_COLS || ny < 0 || ny >= COMBAT_ROWS) continue;
+      for (const [nx, ny] of this.hexNeighbors(cx, cy)) {
         const key = `${nx},${ny}`;
         if (visited.has(key)) continue;
         visited.add(key);
@@ -448,8 +491,7 @@ export class CombatScene extends Phaser.Scene {
     return this.units.filter(u => {
       if (u.faction === attacker.faction || u.count <= 0) return false;
       if (attacker.range > 1) return true; // ranged can always attack
-      const dist = Math.abs(attacker.gridX - u.gridX) + Math.abs(attacker.gridY - u.gridY);
-      return dist <= 1;
+      return this.hexDist(attacker.gridX, attacker.gridY, u.gridX, u.gridY) === 1;
     });
   }
 
@@ -517,12 +559,12 @@ export class CombatScene extends Phaser.Scene {
       if (!u || u.faction !== 'player') return;
       if (this.phase !== 'select_unit') return;
 
-      const col = Math.floor((ptr.x - COMBAT_GRID_X) / COMBAT_CELL_W);
-      const row = Math.floor((ptr.y - COMBAT_GRID_Y) / COMBAT_CELL_H);
-      if (col < 0 || col >= COMBAT_COLS || row < 0 || row >= COMBAT_ROWS) return;
+      const hex = this.pixelToHex(ptr.x, ptr.y);
+      if (!hex) return;
+      const [col, row] = hex;
 
       const occupant = this.unitAt(col, row);
-      if (occupant && occupant !== u) return; // occupied
+      if (occupant && occupant !== u) return; // occupied → handled by onUnitClicked
 
       const reachable = this.reachableCells(u.gridX, u.gridY, u.moveRange);
       if (reachable.some(([c, r]) => c === col && r === row)) {
@@ -550,8 +592,8 @@ export class CombatScene extends Phaser.Scene {
     if (reachable.length === 0) return null;
     // Pick cell closest to target
     reachable.sort((a, b) => {
-      const da = Math.abs(a[0] - target.gridX) + Math.abs(a[1] - target.gridY);
-      const db = Math.abs(b[0] - target.gridX) + Math.abs(b[1] - target.gridY);
+      const da = this.hexDist(a[0], a[1], target.gridX, target.gridY);
+      const db = this.hexDist(b[0], b[1], target.gridX, target.gridY);
       return da - db;
     });
     return reachable[0];
@@ -704,12 +746,9 @@ export class CombatScene extends Phaser.Scene {
       if (u.count <= 0) return false;
       return isEnemy ? u.faction === 'enemy' : u.faction === 'player';
     }).forEach(u => {
+      const { x, y } = this.cell(u.gridX, u.gridY);
       this.hlGraphics.lineStyle(3, isEnemy ? 0xff8000 : 0x00ff88, 0.9);
-      this.hlGraphics.strokeRect(
-        COMBAT_GRID_X + u.gridX * COMBAT_CELL_W + 2,
-        COMBAT_GRID_Y + u.gridY * COMBAT_CELL_H + 2,
-        COMBAT_CELL_W - 4, COMBAT_CELL_H - 4,
-      );
+      this.hlGraphics.strokePoints(this.hexPts(x, y, HX_SIZE - 2), true);
     });
   }
 

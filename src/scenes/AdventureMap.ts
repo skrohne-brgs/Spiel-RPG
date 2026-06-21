@@ -89,9 +89,11 @@ export class AdventureMap extends Phaser.Scene {
     this.renderCities();
     this.renderResources();
     this.createEnemyMarkers();
+    this.renderVictoryMarker();
     this.createHero();
     this.createFogLayer();
     this.createSidebar();
+    this.renderObjectiveBanner();
     this.setupInput();
 
     // Initial fog reveal around starting position
@@ -147,6 +149,43 @@ export class AdventureMap extends Phaser.Scene {
     this.highlightLayer = this.add.container(0, 0).setDepth(3);
     this.computeReachable();
     this.renderHighlights();
+  }
+
+  // ── Mission objective ────────────────────────────────────────────────────────
+
+  private goalLabel(): string {
+    const vt = this.mission.victoryTile;
+    const city = this.mission.cities.find(c => c.tileX === vt.x && c.tileY === vt.y);
+    return city ? city.name : 'das markierte Ziel';
+  }
+
+  /** Pulsing golden marker on the victory tile — drawn above fog so the goal is always findable. */
+  private renderVictoryMarker(): void {
+    const { x, y } = hexCenter(this.mission.victoryTile.x, this.mission.victoryTile.y);
+    const ring = this.add.graphics().setDepth(12);
+    ring.lineStyle(3, 0xffd060, 0.9);
+    ring.strokePoints(hexPts(x, y, HEX_SIZE - 2), true);
+    const star = this.add.text(x, y - HEX_SIZE - 10, '✪', {
+      fontSize: '22px', color: '#ffd060', stroke: '#000000', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(12);
+    this.tweens.add({
+      targets: [ring, star], alpha: 0.35, duration: 900,
+      yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
+  }
+
+  /** Objective banner across the top of the map. */
+  private renderObjectiveBanner(): void {
+    const w = 540, h = 30, x = MAP_W / 2 - w / 2, y = 6;
+    const g = this.add.graphics().setDepth(60);
+    g.fillStyle(0x0a0a05, 0.82);
+    g.lineStyle(1, 0xc8a040, 0.7);
+    g.fillRoundedRect(x, y, w, h, 6);
+    g.strokeRoundedRect(x, y, w, h, 6);
+    this.add.text(MAP_W / 2, y + h / 2,
+      `Mission ${state.currentMissionIdx + 1}/${CAMPAIGN.length}: ${this.mission.title}   ✪ Ziel: Erreiche ${this.goalLabel()}`, {
+        fontSize: '13px', fontFamily: 'Georgia, serif', color: '#ffd060',
+      }).setOrigin(0.5).setDepth(61);
   }
 
   // ── Fog of War ─────────────────────────────────────────────────────────────
@@ -273,11 +312,6 @@ export class AdventureMap extends Phaser.Scene {
     this.divider(sx + 8, 428, SIDEBAR_WIDTH - 16);
     this.moveText = this.add.text(sx + 14, 442,
       `Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`, { fontSize: '12px', color: '#c0b090' });
-
-    // Mission name
-    this.add.text(sx + SIDEBAR_WIDTH / 2, 456, `Mission ${state.currentMissionIdx + 1}: ${this.mission.title}`, {
-      fontSize: '10px', color: '#807060', wordWrap: { width: SIDEBAR_WIDTH - 16 },
-    }).setOrigin(0.5);
 
     // Minimap label
     this.add.text(sx + SIDEBAR_WIDTH / 2, 460, '── KARTE ──', {

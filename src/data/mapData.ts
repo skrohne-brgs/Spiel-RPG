@@ -58,7 +58,7 @@ export const ENEMY_ENCOUNTERS: EnemyEncounter[] = [
   {
     id: 'mountain_troll', name: 'Bergriese',
     stacks: [{ unitId: 'troll', count: 2 }],
-    defeated: false, tileX: 15, tileY: 3,
+    defeated: false, tileX: 12, tileY: 3,
   },
 ];
 
@@ -70,7 +70,7 @@ export const RESOURCES: ResourceOnMap[] = [
   { id: 'gold_5', type: 'gold',     tileX: 3,  tileY: 10, collected: false, goldValue: 175 },
   { id: 'gold_6', type: 'gold',     tileX: 8,  tileY: 12, collected: false, goldValue: 400 },
   { id: 'art_1',  type: 'artifact', tileX: 8,  tileY: 6,  collected: false, artifactId: 'narsil_shard'  },
-  { id: 'art_2',  type: 'artifact', tileX: 13, tileY: 4,  collected: false, artifactId: 'elendilmir'    },
+  { id: 'art_2',  type: 'artifact', tileX: 12, tileY: 4,  collected: false, artifactId: 'elendilmir'    },
   { id: 'art_3',  type: 'artifact', tileX: 14, tileY: 9,  collected: false, artifactId: 'ring_barahir'  },
   { id: 'art_4',  type: 'artifact', tileX: 6,  tileY: 11, collected: false, artifactId: 'mithril_armor' },
 ];

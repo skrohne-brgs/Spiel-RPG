@@ -2,6 +2,7 @@ import type { GameState, HeroData, UnitStack, MissionData } from './types';
 import { MAP_COLS, MAP_ROWS } from './constants';
 import { UNIT_DEFS } from './data/units';
 import { HERO_DEFS } from './data/heroes';
+import { ARTIFACTS } from './data/artifacts';
 
 function makeStack(unitId: string, count: number): UnitStack {
   const def = UNIT_DEFS[unitId];
@@ -120,8 +121,7 @@ export function applySkill(skillId: string): void {
 export function applyArtifact(artifactId: string): void {
   if (state.hero.artifacts.includes(artifactId)) return;
   state.hero.artifacts.push(artifactId);
-  const { ARTIFACTS } = require('./data/artifacts');
-  const art = ARTIFACTS.find((a: { id: string }) => a.id === artifactId);
+  const art = ARTIFACTS.find(a => a.id === artifactId);
   if (!art) return;
   const h = state.hero, b = art.bonuses;
   if (b.attack)     h.attack     += b.attack;
