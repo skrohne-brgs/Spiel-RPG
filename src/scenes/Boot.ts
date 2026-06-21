@@ -521,28 +521,275 @@ export class Boot extends Phaser.Scene {
     ctx.beginPath(); ctx.moveTo(x+S*0.5,y-6); ctx.lineTo(x+S*0.5+10,y-3); ctx.lineTo(x+S*0.5,y+1); ctx.fill();
   }
 
-  // ── Unit / Hero / Enemy textures (unchanged) ──────────────────────────────
+  // ── Unit / Hero / Enemy textures ─────────────────────────────────────────
+  private drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, ir: number, or: number, pts = 5): void {
+    ctx.beginPath();
+    for (let i = 0; i < pts * 2; i++) {
+      const r = i % 2 === 0 ? or : ir;
+      const a = (i / (pts * 2)) * Math.PI * 2 - Math.PI / 2;
+      i === 0 ? ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a)) : ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  private bgGrad(ctx: CanvasRenderingContext2D, color: number, w: number, h: number): CanvasGradient {
+    const rv = (color >> 16) & 0xff, gv = (color >> 8) & 0xff, bv = color & 0xff;
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, `rgb(${Math.min(255,rv+60)},${Math.min(255,gv+60)},${Math.min(255,bv+60)})`);
+    grad.addColorStop(1, `rgb(${Math.max(0,rv-30)},${Math.max(0,gv-30)},${Math.max(0,bv-30)})`);
+    return grad;
+  }
+
   private generateUnitTextures(): void {
-    const colors: Record<string, number> = {
+    const units: Record<string, number> = {
       numenorean_warrior: 0x4a78c0, numenorean_archer: 0x3aa060,
       dunedain_ranger: 0x5a8040, elven_warrior: 0xc0c040, elven_cavalry: 0xe0d060,
       orc_soldier: 0x6a3010, orc_archer: 0x804010, orc_warg_rider: 0x8a4018,
       troll: 0x505850, nazgul: 0x2a1a3a,
     };
-    Object.entries(colors).forEach(([id, color]) => {
-      const tex = this.textures.createCanvas(`unit_${id}`, COMBAT_CELL_W - 8, COMBAT_CELL_H - 14)!;
+    const W = COMBAT_CELL_W - 8, H = COMBAT_CELL_H - 14; // 72 × 61
+
+    Object.entries(units).forEach(([id, color]) => {
+      const tex = this.textures.createCanvas(`unit_${id}`, W, H)!;
       const ctx = tex.context as unknown as CanvasRenderingContext2D;
-      const w = COMBAT_CELL_W - 8, h = COMBAT_CELL_H - 14;
-      const rv = (color >> 16) & 0xff, gv = (color >> 8) & 0xff, bv = color & 0xff;
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, `rgb(${Math.min(255,rv+50)},${Math.min(255,gv+50)},${Math.min(255,bv+50)})`);
-      grad.addColorStop(1, `rgb(${Math.max(0,rv-25)},${Math.max(0,gv-25)},${Math.max(0,bv-25)})`);
-      this.rrect(ctx, 2, 2, w-4, h-4, 6);
-      ctx.fillStyle = grad; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.lineWidth = 1.5;
-      this.rrect(ctx, 2, 2, w-4, h-4, 6); ctx.stroke();
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      ctx.beginPath(); ctx.moveTo(4,4); ctx.lineTo(w-4,4); ctx.lineTo(4,h/2); ctx.closePath(); ctx.fill();
+
+      // --- Background rounded rect ---
+      const bg = this.bgGrad(ctx, color, W, H);
+      this.rrect(ctx, 2, 2, W-4, H-4, 6);
+      ctx.fillStyle = bg; ctx.fill();
+
+      // --- Edge highlight ---
+      ctx.strokeStyle = 'rgba(255,255,255,0.38)'; ctx.lineWidth = 1.5;
+      this.rrect(ctx, 2, 2, W-4, H-4, 6); ctx.stroke();
+
+      // --- Inner top sheen ---
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.beginPath(); ctx.moveTo(4,4); ctx.lineTo(W-4,4); ctx.lineTo(4, H*0.45); ctx.closePath(); ctx.fill();
+
+      // --- Per-unit artwork ---
+      switch (id) {
+        case 'numenorean_warrior': {
+          // Kite shield (pentagon pointing down) with cross and star
+          ctx.fillStyle = 'rgba(220,230,255,0.92)';
+          ctx.beginPath();
+          ctx.moveTo(36,6); ctx.lineTo(58,18); ctx.lineTo(58,42); ctx.lineTo(36,58); ctx.lineTo(14,42); ctx.lineTo(14,18);
+          ctx.closePath(); ctx.fill();
+          // Cross on shield
+          ctx.strokeStyle = '#3a60a8'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(36,8); ctx.lineTo(36,54); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(16,28); ctx.lineTo(56,28); ctx.stroke();
+          // Star emblem
+          ctx.fillStyle = '#ffd060';
+          this.drawStar(ctx, 36, 28, 4, 8, 8);
+          break;
+        }
+        case 'numenorean_archer': {
+          // Bow arc + arrow
+          ctx.strokeStyle = 'rgba(200,255,220,0.9)'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(50, 30, 24, Math.PI*0.55, Math.PI*1.45); ctx.stroke();
+          // Bowstring
+          ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(200,255,220,0.7)';
+          ctx.beginPath(); ctx.moveTo(37,12); ctx.lineTo(37,48); ctx.stroke();
+          // Arrow shaft
+          ctx.strokeStyle = 'rgba(220,255,230,0.9)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(12,30); ctx.lineTo(55,30); ctx.stroke();
+          // Arrowhead
+          ctx.fillStyle = '#ffd060';
+          ctx.beginPath(); ctx.moveTo(60,30); ctx.lineTo(52,26); ctx.lineTo(52,34); ctx.closePath(); ctx.fill();
+          // Fletching
+          ctx.strokeStyle = '#60cc80'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(14,30); ctx.lineTo(8,24); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(14,30); ctx.lineTo(8,36); ctx.stroke();
+          break;
+        }
+        case 'dunedain_ranger': {
+          // Cloaked figure: trapezoid body + circle head, cream color
+          ctx.fillStyle = 'rgba(220,215,190,0.88)';
+          // Cloak body (wide trapezoid)
+          ctx.beginPath();
+          ctx.moveTo(22,54); ctx.lineTo(50,54); ctx.lineTo(44,22); ctx.lineTo(28,22);
+          ctx.closePath(); ctx.fill();
+          // Hood (circle for head)
+          ctx.beginPath(); ctx.arc(36, 16, 10, 0, Math.PI*2); ctx.fill();
+          // Dark shadow for depth
+          ctx.fillStyle = 'rgba(40,60,30,0.35)';
+          ctx.beginPath();
+          ctx.moveTo(36,54); ctx.lineTo(50,54); ctx.lineTo(44,22); ctx.lineTo(36,22);
+          ctx.closePath(); ctx.fill();
+          // Ranger star badge
+          ctx.fillStyle = '#c8a040';
+          this.drawStar(ctx, 36, 38, 3, 6, 5);
+          break;
+        }
+        case 'elven_warrior': {
+          // Elegant elven sword — long thin diamond blade
+          ctx.fillStyle = 'rgba(240,245,210,0.95)';
+          // Blade (long thin rhombus)
+          ctx.beginPath();
+          ctx.moveTo(36,4); ctx.lineTo(40,30); ctx.lineTo(36,58); ctx.lineTo(32,30);
+          ctx.closePath(); ctx.fill();
+          // Fuller (center ridge)
+          ctx.strokeStyle = 'rgba(200,220,100,0.5)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(36,6); ctx.lineTo(36,52); ctx.stroke();
+          // Crossguard
+          ctx.fillStyle = '#e0d060';
+          ctx.fillRect(24, 28, 24, 4);
+          // Pommel
+          ctx.beginPath(); ctx.arc(36, 56, 4, 0, Math.PI*2); ctx.fill();
+          // Blade edge highlight
+          ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(36,4); ctx.lineTo(32,30); ctx.stroke();
+          break;
+        }
+        case 'elven_cavalry': {
+          // Horse head + neck silhouette
+          ctx.fillStyle = 'rgba(240,240,200,0.92)';
+          // Neck
+          ctx.beginPath();
+          ctx.moveTo(28,56); ctx.lineTo(38,56); ctx.lineTo(48,28); ctx.lineTo(38,22); ctx.lineTo(28,28);
+          ctx.closePath(); ctx.fill();
+          // Head
+          ctx.beginPath();
+          ctx.moveTo(34,22); ctx.lineTo(48,20); ctx.lineTo(56,30); ctx.lineTo(52,36); ctx.lineTo(36,36);
+          ctx.closePath(); ctx.fill();
+          // Ear
+          ctx.beginPath(); ctx.moveTo(44,20); ctx.lineTo(48,10); ctx.lineTo(52,20); ctx.closePath(); ctx.fill();
+          // Eye
+          ctx.fillStyle = '#3a2010';
+          ctx.beginPath(); ctx.arc(50, 27, 2.5, 0, Math.PI*2); ctx.fill();
+          // Mane
+          ctx.strokeStyle = '#e0c040'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(38,22); ctx.quadraticCurveTo(32,14, 30,8); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(40,24); ctx.quadraticCurveTo(34,16, 32,10); ctx.stroke();
+          break;
+        }
+        case 'orc_soldier': {
+          // Crude axe head — large crescent/blade shape
+          ctx.fillStyle = 'rgba(200,180,130,0.88)';
+          // Axe haft
+          ctx.fillRect(33, 6, 5, 52);
+          // Blade (large crescent using overlapping circles trick)
+          ctx.beginPath();
+          ctx.arc(40, 24, 20, -Math.PI*0.6, Math.PI*0.6);
+          ctx.lineTo(35, 10); ctx.closePath(); ctx.fill();
+          // Blade cutout for crescent shape
+          ctx.fillStyle = bg;
+          ctx.beginPath(); ctx.arc(48, 24, 14, -Math.PI*0.7, Math.PI*0.7); ctx.closePath(); ctx.fill();
+          // Re-draw haft over cutout
+          ctx.fillStyle = 'rgba(160,140,80,0.9)';
+          ctx.fillRect(33, 6, 5, 52);
+          // Spike top
+          ctx.fillStyle = 'rgba(200,180,130,0.88)';
+          ctx.beginPath(); ctx.moveTo(35,6); ctx.lineTo(36,1); ctx.lineTo(38,6); ctx.closePath(); ctx.fill();
+          break;
+        }
+        case 'orc_archer': {
+          // Two crossed arrows (X shape)
+          ctx.strokeStyle = 'rgba(210,190,140,0.92)'; ctx.lineWidth = 3;
+          // Arrow 1: top-left to bottom-right
+          ctx.beginPath(); ctx.moveTo(14,10); ctx.lineTo(58,52); ctx.stroke();
+          // Arrow 2: top-right to bottom-left
+          ctx.beginPath(); ctx.moveTo(58,10); ctx.lineTo(14,52); ctx.stroke();
+          // Arrowheads
+          ctx.fillStyle = '#c09030'; ctx.lineWidth = 1;
+          // Top-right head
+          ctx.beginPath(); ctx.moveTo(58,10); ctx.lineTo(50,14); ctx.lineTo(54,20); ctx.closePath(); ctx.fill();
+          // Bottom-left head
+          ctx.beginPath(); ctx.moveTo(14,52); ctx.lineTo(22,48); ctx.lineTo(18,42); ctx.closePath(); ctx.fill();
+          // Fletching lines
+          ctx.strokeStyle = '#804010'; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(14,10); ctx.lineTo(20,14); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(14,10); ctx.lineTo(18,20); ctx.stroke();
+          break;
+        }
+        case 'orc_warg_rider': {
+          // Warg/wolf head silhouette: pointed ears, snout
+          ctx.fillStyle = 'rgba(200,175,130,0.9)';
+          // Main head shape
+          ctx.beginPath();
+          ctx.moveTo(20,50); ctx.lineTo(52,50); ctx.lineTo(56,36); ctx.lineTo(50,20);
+          ctx.lineTo(38,14); ctx.lineTo(26,18); ctx.lineTo(18,32);
+          ctx.closePath(); ctx.fill();
+          // Left ear
+          ctx.beginPath(); ctx.moveTo(26,18); ctx.lineTo(20,6); ctx.lineTo(32,14); ctx.closePath(); ctx.fill();
+          // Right ear
+          ctx.beginPath(); ctx.moveTo(40,14); ctx.lineTo(44,4); ctx.lineTo(52,16); ctx.closePath(); ctx.fill();
+          // Snout extension
+          ctx.beginPath();
+          ctx.moveTo(20,50); ctx.lineTo(52,50); ctx.lineTo(56,56); ctx.lineTo(16,56);
+          ctx.closePath(); ctx.fill();
+          // Eyes (red, menacing)
+          ctx.fillStyle = '#cc2200';
+          ctx.beginPath(); ctx.ellipse(28, 30, 4, 3, -0.3, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(44, 28, 4, 3, 0.3, 0, Math.PI*2); ctx.fill();
+          // Nostril
+          ctx.fillStyle = 'rgba(60,30,10,0.7)';
+          ctx.beginPath(); ctx.ellipse(32, 50, 3, 2, 0, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(42, 50, 3, 2, 0, 0, Math.PI*2); ctx.fill();
+          break;
+        }
+        case 'troll': {
+          // Large body: rounded trapezoid + round head + raised fist
+          ctx.fillStyle = 'rgba(200,210,190,0.88)';
+          // Body (wide)
+          ctx.beginPath();
+          ctx.moveTo(16,56); ctx.lineTo(56,56); ctx.lineTo(52,28); ctx.lineTo(20,28);
+          ctx.closePath(); ctx.fill();
+          // Head (big circle)
+          ctx.beginPath(); ctx.arc(36, 18, 14, 0, Math.PI*2); ctx.fill();
+          // Left arm + raised fist
+          ctx.beginPath();
+          ctx.moveTo(20,28); ctx.lineTo(8,18); ctx.lineTo(10,38); ctx.lineTo(18,42);
+          ctx.closePath(); ctx.fill();
+          // Fist detail
+          ctx.beginPath(); ctx.arc(9, 16, 6, 0, Math.PI*2); ctx.fill();
+          // Right arm
+          ctx.beginPath();
+          ctx.moveTo(52,28); ctx.lineTo(62,38); ctx.lineTo(58,50); ctx.lineTo(50,44);
+          ctx.closePath(); ctx.fill();
+          // Dark shading details
+          ctx.fillStyle = 'rgba(50,60,40,0.3)';
+          ctx.beginPath(); ctx.arc(32, 15, 5, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(42, 17, 4, 0, Math.PI*2); ctx.fill();
+          // Angry eyes
+          ctx.fillStyle = '#cc3300';
+          ctx.beginPath(); ctx.ellipse(30, 16, 3.5, 3, 0.2, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.ellipse(42, 16, 3.5, 3, -0.2, 0, Math.PI*2); ctx.fill();
+          break;
+        }
+        case 'nazgul': {
+          // Dark shroud: wide trapezoid with glowing red eye
+          ctx.fillStyle = 'rgba(30,10,50,0.96)';
+          // Shroud/cloak (wide at base, narrowing to hood tip)
+          ctx.beginPath();
+          ctx.moveTo(8,58); ctx.lineTo(64,58); ctx.lineTo(52,10); ctx.lineTo(36,4); ctx.lineTo(20,10);
+          ctx.closePath(); ctx.fill();
+          // Inner dark core
+          ctx.fillStyle = 'rgba(10,0,20,0.8)';
+          ctx.beginPath();
+          ctx.moveTo(18,56); ctx.lineTo(54,56); ctx.lineTo(46,18); ctx.lineTo(36,12); ctx.lineTo(26,18);
+          ctx.closePath(); ctx.fill();
+          // Glowing red "eye" in center
+          const eyeGrad = ctx.createRadialGradient(36, 32, 0, 36, 32, 10);
+          eyeGrad.addColorStop(0, 'rgba(255,80,0,0.95)');
+          eyeGrad.addColorStop(0.5, 'rgba(200,0,0,0.7)');
+          eyeGrad.addColorStop(1, 'rgba(80,0,0,0)');
+          ctx.fillStyle = eyeGrad;
+          ctx.beginPath(); ctx.ellipse(36, 32, 12, 7, 0, 0, Math.PI*2); ctx.fill();
+          // Pupil slit
+          ctx.fillStyle = 'rgba(0,0,0,0.9)';
+          ctx.beginPath(); ctx.ellipse(36, 32, 2, 6, 0, 0, Math.PI*2); ctx.fill();
+          // Glow halo around eye
+          ctx.strokeStyle = 'rgba(255,60,0,0.5)'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(36, 32, 14, 9, 0, 0, Math.PI*2); ctx.stroke();
+          // White hood highlight edge
+          ctx.strokeStyle = 'rgba(80,40,120,0.6)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(36,4); ctx.lineTo(20,10); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(36,4); ctx.lineTo(52,10); ctx.stroke();
+          break;
+        }
+      }
+
       tex.refresh();
     });
   }

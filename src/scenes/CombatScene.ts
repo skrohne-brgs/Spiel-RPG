@@ -303,22 +303,18 @@ export class CombatScene extends Phaser.Scene {
     const c = this.add.container(x, y).setDepth(15);
 
     const isActive = u === this.activeUnit;
-    const bg = this.add.graphics();
-    bg.fillStyle(u.color, 0.88);
+    const unitImg = this.add.image(0, -4, `unit_${u.id}`).setDisplaySize(60, 52);
     const borderColor = u.faction === 'player'
       ? (isActive ? 0xffffff : 0x88aaff)
-      : (u === this.activeUnit ? 0xffffff : 0xff6666);
-    bg.lineStyle(isActive ? 3 : 2, borderColor, 0.9);
-    bg.fillRoundedRect(-30, -30, 60, 60, 6);
-    bg.strokeRoundedRect(-30, -30, 60, 60, 6);
+      : (isActive ? 0xffffff : 0xff6666);
+    const border = this.add.graphics();
+    border.lineStyle(isActive ? 3 : 2, borderColor, 0.9);
+    border.strokeRoundedRect(-30, -26, 60, 52, 6);
 
     // Status icons
     if (u.blessed) { this.add.text(-28, -28, '✦', { fontSize: '10px', color: '#ffff88' }).setDepth(16); }
     if (u.slowed)  { this.add.text( 16, -28, '⏿', { fontSize: '10px', color: '#8888ff' }).setDepth(16); }
 
-    const sym = this.add.text(0, -8, u.symbol, {
-      fontSize: '22px', fontFamily: 'monospace', color: '#ffffff',
-    }).setOrigin(0.5);
     const countTxt = this.add.text(0, 14, `${u.count}`, {
       fontSize: '14px', color: '#ffffff', fontStyle: 'bold',
     }).setOrigin(0.5);
@@ -330,7 +326,7 @@ export class CombatScene extends Phaser.Scene {
       .fillStyle(hpFrac > 0.6 ? 0x44bb44 : hpFrac > 0.3 ? 0xddcc00 : 0xcc3333)
       .fillRect(-bw/2, 28, bw * hpFrac, 5);
 
-    c.add([bg, sym, countTxt, barBg, barFg]);
+    c.add([unitImg, border, countTxt, barBg, barFg]);
     c.setInteractive(new Phaser.Geom.Rectangle(-30, -30, 60, 60), Phaser.Geom.Rectangle.Contains);
     c.on('pointerdown', () => this.onUnitClicked(u));
     c.on('pointerover', () => this.showTooltip(u, x, y));

@@ -109,8 +109,8 @@ export class DialogScene extends Phaser.Scene {
     } else {
       this.input.keyboard?.off('keydown-SPACE');
       this.input.keyboard?.off('keydown-ENTER');
+      this.events.emit('dialog_complete', this.onComplete);   // emit custom event FIRST
       this.scene.stop('DialogScene');
-      this.events.emit('shutdown');
     }
   }
 }

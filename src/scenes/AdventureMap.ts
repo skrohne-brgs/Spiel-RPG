@@ -410,9 +410,11 @@ export class AdventureMap extends Phaser.Scene {
       rowBg.fillRoundedRect(sx + 10, yo, SIDEBAR_WIDTH - 20, 40, 4);
       rowBg.strokeRoundedRect(sx + 10, yo, SIDEBAR_WIDTH - 20, 40, 4);
       this.armyRows.add(rowBg);
+      const unitImg = this.add.image(sx + 14 + 14, yo + 20, `unit_${stack.id}`).setDisplaySize(28, 28);
+      this.armyRows.add(unitImg);
       this.armyRows.add([
-        this.add.text(sx + 22, yo + 5,  `[${stack.symbol}] ${stack.name}`, { fontSize: '12px', color: '#e0d0a0' }),
-        this.add.text(sx + 22, yo + 22, `×${stack.count}  HP ${stack.currentHp}/${stack.maxHp}`, { fontSize: '11px', color: '#a09070' }),
+        this.add.text(sx + 36, yo + 5,  stack.name, { fontSize: '12px', color: '#e0d0a0' }),
+        this.add.text(sx + 36, yo + 22, `×${stack.count}  HP ${stack.currentHp}/${stack.maxHp}`, { fontSize: '11px', color: '#a09070' }),
       ]);
       yo += 46;
     });
@@ -599,8 +601,10 @@ export class AdventureMap extends Phaser.Scene {
         saveGame();
         this.updateObjectiveBanner();
         if (this.mission.phaseOneEventId) {
-          const ev = STORY_EVENTS[this.mission.phaseOneEventId];
-          if (ev) this.time.delayedCall(600, () => this.launchDialog(ev));
+          const phEv = STORY_EVENTS[this.mission.phaseOneEventId];
+          if (phEv) this.time.delayedCall(600, () => this.launchDialog(phEv));
+        } else if (state.heroTile.x === this.mission.victoryTile.x && state.heroTile.y === this.mission.victoryTile.y) {
+          this.time.delayedCall(400, () => this.onHeroArrived(state.heroTile.x, state.heroTile.y));
         }
       }
     }
@@ -630,12 +634,12 @@ export class AdventureMap extends Phaser.Scene {
   private launchDialog(ev: { id: string; lines: { speaker: string; text: string }[]; onComplete?: string }): void {
     this.scene.pause('AdventureMap');
     this.scene.launch('DialogScene', { event: ev });
-    this.scene.get('DialogScene').events.once('shutdown', () => {
-      if (ev.onComplete === 'victory') {
+    this.scene.get('DialogScene').events.once('dialog_complete', (onComplete?: string) => {
+      if (onComplete === 'victory') {
         music.stop();
         this.scene.stop('AdventureMap');
         this.scene.start('VictoryScene');
-      } else if (ev.onComplete === 'mission_complete') {
+      } else if (onComplete === 'mission_complete') {
         music.stop();
         advanceMission();
         saveGame();
@@ -643,6 +647,15 @@ export class AdventureMap extends Phaser.Scene {
         this.scene.start('CampaignScene');
       } else {
         this.scene.resume('AdventureMap');
+        // After phase dialog, auto-trigger victory if already at victory tile
+        if (state.missionVictoryPhase >= 1) {
+          const vc = this.mission.victoryCondition;
+          if ((vc.type === 'boss_then_reach' || vc.type === 'artifact_then_reach') &&
+              state.heroTile.x === this.mission.victoryTile.x &&
+              state.heroTile.y === this.mission.victoryTile.y) {
+            this.time.delayedCall(300, () => this.onHeroArrived(state.heroTile.x, state.heroTile.y));
+          }
+        }
       }
     });
   }
@@ -667,15 +680,17 @@ export class AdventureMap extends Phaser.Scene {
           saveGame();
           this.updateObjectiveBanner();
           if (this.mission.phaseOneEventId) {
-            const ev = STORY_EVENTS[this.mission.phaseOneEventId];
-            if (ev) {
+            const phEv = STORY_EVENTS[this.mission.phaseOneEventId];
+            if (phEv) {
               this.time.delayedCall(300, () => {
                 this.scene.resume('AdventureMap');
                 music.play('map');
-                this.launchDialog(ev);
+                this.launchDialog(phEv);
               });
               return;
             }
+          } else if (state.heroTile.x === this.mission.victoryTile.x && state.heroTile.y === this.mission.victoryTile.y) {
+            this.time.delayedCall(400, () => this.onHeroArrived(state.heroTile.x, state.heroTile.y));
           }
         }
 
