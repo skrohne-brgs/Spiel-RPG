@@ -564,7 +564,15 @@ export class AdventureMap extends Phaser.Scene {
         return;
       }
       const ev = STORY_EVENTS[evId];
-      if (ev) { triggerEvent(evId); this.launchDialog(ev); return; }
+      if (ev) {
+        triggerEvent(evId);
+        if (ev.onComplete === 'mission_complete' || ev.onComplete === 'victory') {
+          this.showVictoryOverlay();
+        } else {
+          this.launchDialog(ev);
+        }
+        return;
+      }
     }
 
     const enc = this.mission.enemies.find(e => e.tileX === col && e.tileY === row && !isEnemyDefeated(e.id));
@@ -592,9 +600,8 @@ export class AdventureMap extends Phaser.Scene {
       // Check victory artifact conditions
       const vc = this.mission.victoryCondition;
       if (vc.type === 'artifact' && vc.artifactId === res.artifactId) {
-        // Mission victory: show victory event dialog
-        const ev = STORY_EVENTS[this.mission.victoryEventId];
-        if (ev) { triggerEvent(ev.id); this.time.delayedCall(600, () => this.launchDialog(ev)); }
+        triggerEvent(this.mission.victoryEventId);
+        this.time.delayedCall(600, () => this.showVictoryOverlay());
       } else if (vc.type === 'artifact_then_reach' && vc.artifactId === res.artifactId && state.missionVictoryPhase < 1) {
         // Phase 1 unlocked: show transition dialog, then reach victoryTile
         setVictoryPhase(1);
@@ -628,6 +635,57 @@ export class AdventureMap extends Phaser.Scene {
       this.goldText.setText(`⚙ Gold: ${state.gold}`);
       this.scene.resume('AdventureMap');
       music.play('map');
+    });
+  }
+
+  private showVictoryOverlay(): void {
+    const isLastMission = state.currentMissionIdx >= CAMPAIGN.length - 1;
+
+    const overlay = this.add.graphics().setDepth(90);
+    overlay.fillStyle(0x000000, 0.65);
+    overlay.fillRect(0, 0, MAP_W, GAME_HEIGHT);
+
+    const pw = 420, ph = 220;
+    const px = (MAP_W - pw) / 2, py = (GAME_HEIGHT - ph) / 2;
+    const panel = this.add.graphics().setDepth(91);
+    panel.fillStyle(0x08060f, 1);
+    panel.lineStyle(2, 0xffd060, 1);
+    panel.fillRoundedRect(px, py, pw, ph, 10);
+    panel.strokeRoundedRect(px, py, pw, ph, 10);
+
+    this.add.text(MAP_W / 2, py + 38, '✦ Missionsziel erreicht! ✦', {
+      fontSize: '21px', fontFamily: 'Georgia, serif', color: '#ffd060',
+    }).setOrigin(0.5).setDepth(92);
+
+    this.add.text(MAP_W / 2, py + 80, CAMPAIGN[state.currentMissionIdx].title, {
+      fontSize: '15px', fontFamily: 'Georgia, serif', color: '#c0a080',
+    }).setOrigin(0.5).setDepth(92);
+
+    const btnLabel = isLastMission ? '→  Feldzug gewonnen!' : '→  Missionsauswahl';
+    const bx = MAP_W / 2, by = py + 158;
+    const btnG = this.add.graphics().setDepth(92);
+    btnG.fillStyle(0x1a0e04); btnG.lineStyle(2, 0xffd060);
+    btnG.fillRoundedRect(bx - 140, by - 22, 280, 44, 6);
+    btnG.strokeRoundedRect(bx - 140, by - 22, 280, 44, 6);
+
+    const btnTxt = this.add.text(bx, by, btnLabel, {
+      fontSize: '16px', fontFamily: 'Georgia, serif', color: '#ffd060',
+    }).setOrigin(0.5).setDepth(93);
+
+    const zone = this.add.zone(bx, by, 280, 44).setInteractive({ cursor: 'pointer' }).setDepth(94);
+    zone.on('pointerover', () => btnTxt.setColor('#ffffff'));
+    zone.on('pointerout',  () => btnTxt.setColor('#ffd060'));
+    zone.on('pointerdown', () => {
+      music.stop();
+      if (isLastMission) {
+        this.scene.stop('AdventureMap');
+        this.scene.start('VictoryScene');
+      } else {
+        advanceMission();
+        saveGame();
+        this.scene.stop('AdventureMap');
+        this.scene.start('CampaignScene');
+      }
     });
   }
 
