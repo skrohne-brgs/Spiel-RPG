@@ -53,4 +53,24 @@ export const UNIT_DEFS: Record<string, UnitDef> = {
     faction: 'enemy', maxHp: 80, attack: 15, defense: 8, speed: 7, range: 1, moveRange: 4,
     color: 0x2a1a3a, symbol: 'N',
   },
+  easterling_warrior: {
+    id: 'easterling_warrior', name: 'Rhûn-Krieger',
+    faction: 'enemy', maxHp: 18, attack: 6, defense: 4, speed: 5, range: 1, moveRange: 3,
+    color: 0x8b4513, symbol: 'R',
+  },
+  easterling_rider: {
+    id: 'easterling_rider', name: 'Rhûn-Reiter',
+    faction: 'enemy', maxHp: 20, attack: 9, defense: 4, speed: 9, range: 1, moveRange: 5,
+    color: 0xa0522d, symbol: 'C',
+  },
+  cave_troll: {
+    id: 'cave_troll', name: 'Höhlentroll',
+    faction: 'enemy', maxHp: 80, attack: 14, defense: 8, speed: 2, range: 1, moveRange: 2,
+    color: 0x3a4030, symbol: 'H',
+  },
+  saurons_lieutenant: {
+    id: 'saurons_lieutenant', name: 'Saurons Leutnant',
+    faction: 'enemy', maxHp: 120, attack: 18, defense: 12, speed: 6, range: 1, moveRange: 4,
+    color: 0x2a1a2a, symbol: 'L',
+  },
 };

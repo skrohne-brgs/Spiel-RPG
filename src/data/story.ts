@@ -57,7 +57,91 @@ export const STORY_EVENTS: Record<string, StoryEvent> = {
       { speaker: 'Anárion', text: 'Gil-galad wird uns nicht alleinlassen. Die Letzte Allianz... sie muss gebildet werden.' },
       { speaker: 'Elendil', text: 'Eriador ist befreit. Kehrt heim, mein Sohn. Wir haben Boten zu senden und Könige zu überzeugen. Die letzte große Allianz zwischen Elben und Menschen wird Saurons Herrschaft brechen!' },
     ],
+    onComplete: 'mission_complete',
+  },
+
+  gondor_complete: {
+    id: 'gondor_complete',
+    lines: [
+      { speaker: 'Anárion', text: 'Minas Anor ist unser! Die weiße Stadt steht als Leuchtfeuer des Südens.' },
+      { speaker: 'Elendil', text: 'Gondor ist gegründet. Doch Sauron ruht nicht. Wir müssen die Bergpässe sichern.' },
+      { speaker: 'Anárion', text: 'Moria... der Weg durch das Misty Mountains wird gefährlich sein.' },
+      { speaker: 'Elendil', text: 'Dann bereiten wir uns vor. Das Reich Gondors muss ausgedehnt werden – oder fallen.' },
+    ],
+    onComplete: 'mission_complete',
+  },
+
+  moria_complete: {
+    id: 'moria_complete',
+    lines: [
+      { speaker: 'Elendil', text: 'Der Bergpass ist frei! Unsere Truppen können nun zwischen Gondor und Arnor marschieren.' },
+      { speaker: 'Anárion', text: 'Die Dunkelheit in Moria war tiefer als erwartet. Etwas Altes schläft dort noch.' },
+      { speaker: 'Elendil', text: 'Wir wecken es nicht. Der Weg nach Osten liegt offen – die Ostlande rufen uns.' },
+      { speaker: 'Anárion', text: 'Rhûn. Die Verbündeten Saurons müssen gebrochen werden, bevor wir ihn selbst angreifen.' },
+    ],
+    onComplete: 'mission_complete',
+  },
+
+  rhun_complete: {
+    id: 'rhun_complete',
+    lines: [
+      { speaker: 'Anárion', text: 'Die Zitadelle von Rhûn ist gefallen! Die Ostlande sind frei vom Schatten.' },
+      { speaker: 'Elendil', text: 'Saurons rechte Hand ist gebrochen. Nun müssen wir das Haupt selbst abschlagen.' },
+      { speaker: 'Anárion', text: 'Barad-dûr. Das Schwarze Tor. Wir marschieren auf Mordor selbst zu.' },
+      { speaker: 'Elendil', text: 'Die Letzte Allianz ist vollzählig. Elben und Menschen Seite an Seite. Dies ist unser Schicksal.' },
+    ],
+    onComplete: 'mission_complete',
+  },
+
+  baradur_victory: {
+    id: 'baradur_victory',
+    lines: [
+      { speaker: 'Anárion', text: 'Vater – Barad-dûr wankt! Saurons Turm zerbricht unter unserem Ansturm!' },
+      { speaker: 'Elendil', text: 'Gil-galad, der Hochkönig der Elben, kämpft an unserer Seite. Heute endet Saurons Herrschaft!' },
+      { speaker: 'Anárion', text: 'Der Eine Ring... er muss vernichtet werden, um ihn für immer zu binden!' },
+      { speaker: 'Elendil', text: 'Mittelerde ist frei. Die Letzte Allianz hat gesiegt. Dies ist unser größter Sieg – und unser größtes Opfer. Möge dieses Zeitalter in Frieden enden.' },
+    ],
     onComplete: 'victory',
+  },
+
+  gondor_intro: {
+    id: 'gondor_intro',
+    lines: [
+      { speaker: 'Elendil', text: 'Eriador ist gesichert. Nun müssen wir Gondor errichten – das südliche Reich der Númenórer.' },
+      { speaker: 'Anárion', text: 'Pelargir am Anduin wird unser erster Brückenkopf. Von dort marschieren wir nach Norden.' },
+      { speaker: 'Elendil', text: 'Minas Anor soll unsere Hauptfestung sein. Wenn diese Stadt steht, steht Gondor.' },
+      { speaker: 'Anárion', text: 'Für Gondor! Für das Erbe Númenors!' },
+    ],
+  },
+
+  moria_intro: {
+    id: 'moria_intro',
+    lines: [
+      { speaker: 'Elendil', text: 'Die Caradhras-Pässe sind von Feinden blockiert. Wir müssen durch das Gebirge.' },
+      { speaker: 'Anárion', text: 'Durch Moria? Die alten Minen der Zwerge... man sagt, dort lebt nichts mehr.' },
+      { speaker: 'Elendil', text: 'Gerüchte. Wir brauchen diesen Durchgang, um Ost und West zu verbinden.' },
+      { speaker: 'Anárion', text: 'Dann führe uns durch, Vater. Aber auf der Hut sein – Dunkelheit birgt Überraschungen.' },
+    ],
+  },
+
+  rhun_intro: {
+    id: 'rhun_intro',
+    lines: [
+      { speaker: 'Elendil', text: 'Im Osten, hinter den Nebelmbergen, liegt Rhûn – das Land der Easterlings, Saurons treue Verbündete.' },
+      { speaker: 'Anárion', text: 'Sie liefern ihm Krieger und Ressourcen. Solange Rhûn fällt, bleibt Sauron gestärkt.' },
+      { speaker: 'Elendil', text: 'Dann brechen wir seine Lieferkette. Die Easterlings müssen spüren, dass die Allianz Stärke hat.' },
+      { speaker: 'Anárion', text: 'Nach Rhûn dann. Und möge ihr Zitadelle fallen.' },
+    ],
+  },
+
+  mordor_siege_intro: {
+    id: 'mordor_siege_intro',
+    lines: [
+      { speaker: 'Elendil', text: 'Dies ist es, mein Sohn. Vor uns liegen die Tore Mordors. Barad-dûr selbst.' },
+      { speaker: 'Anárion', text: 'Das Ödland... die Luft brennt in den Lungen. Saurons Wille liegt schwer auf diesem Land.' },
+      { speaker: 'Elendil', text: 'Aber wir stehen hier. Elendil, Anárion, Gil-galad – die Letzte Allianz in Vollzahl.' },
+      { speaker: 'Anárion', text: 'Vorwärts! Für alle, die für diese Stunde gekämpft haben. Wir brechen Saurons Turm!' },
+    ],
   },
 
   combat_win: {

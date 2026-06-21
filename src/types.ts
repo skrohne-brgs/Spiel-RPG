@@ -1,5 +1,24 @@
 export interface Position { x: number; y: number; }
 
+export interface MissionCity {
+  id: string; name: string; description: string;
+  tileX: number; tileY: number;
+  recruitOptions: Array<{ unitId: string; cost: number; available: number }>;
+}
+
+export interface MissionData {
+  id: string; title: string; subtitle: string; description: string;
+  mapTiles: number[][];
+  enemies: EnemyEncounter[];
+  resources: ResourceOnMap[];
+  storyTriggers: Record<string, string>;
+  cities: MissionCity[];
+  victoryTile: { x: number; y: number };
+  startTile: { x: number; y: number };
+  victoryEventId: string;
+  introEventId?: string;
+}
+
 export interface UnitDef {
   id: string;
   name: string;
@@ -94,4 +113,6 @@ export interface GameState {
   collectedResources: string[];
   spellCastThisCombat: boolean;
   fogMap: number[][];  // 0=unentdeckt  1=gesehen  2=sichtbar
+  currentMissionIdx: number;   // 0–4
+  completedMissions: number[];
 }
