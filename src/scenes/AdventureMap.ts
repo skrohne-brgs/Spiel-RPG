@@ -416,6 +416,7 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private openHeroScreen(): void {
+    if (!this.scene.isActive()) return;  // Fix 1: don't open while paused (e.g. during combat)
     this.scene.pause('AdventureMap');
     this.scene.launch('HeroScreen');
     this.scene.get('HeroScreen').events.once('heroscreen_close', () => {
@@ -561,14 +562,17 @@ export class AdventureMap extends Phaser.Scene {
       collectLore(lore.id);
       this.loreSprites.get(lore.id)?.destroy();
       this.loreSprites.delete(lore.id);
+      // Fix 5: also collect any resource on the same tile before the early return
+      const colocated = this.mission.resources.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
+      if (colocated) this.collectResourceItem(colocated);
       this.checkSideObjectives();
       const ev = STORY_EVENTS[lore.id];
       if (ev) { this.launchDialog(ev); return; }
     }
 
-    // Resources
+    // Resources — Fix 4: return early if collectResourceItem signals a victory dialog was triggered
     const res = this.mission.resources.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
-    if (res) this.collectResourceItem(res);
+    if (res && this.collectResourceItem(res)) return;
 
     const city = this.mission.cities.find(c => c.tileX === col && c.tileY === row);
     if (city) { this.openCity(city.id); return; }
@@ -589,11 +593,7 @@ export class AdventureMap extends Phaser.Scene {
       const ev = STORY_EVENTS[evId];
       if (ev) {
         triggerEvent(evId);
-        if (ev.onComplete === 'mission_complete' || ev.onComplete === 'victory') {
-          this.showVictoryOverlay();
-        } else {
-          this.launchDialog(ev);
-        }
+        this.launchDialog(ev);  // Fix 3: always show dialog (victory handled in dialog_complete)
         return;
       }
     }
@@ -602,7 +602,8 @@ export class AdventureMap extends Phaser.Scene {
     if (enc) this.startCombat(enc);
   }
 
-  private collectResourceItem(res: ResourceOnMap): void {
+  // Returns true when a victory dialog was triggered (caller should return early)
+  private collectResourceItem(res: ResourceOnMap): boolean {
     collectResource(res.id);
     this.resourceSprites.get(res.id)?.destroy();
     this.resourceSprites.delete(res.id);
@@ -620,13 +621,14 @@ export class AdventureMap extends Phaser.Scene {
         this.manaText.setText(`Mana: ${state.hero.mana}/${state.hero.maxMana}  |  Zauberstärke: ${state.hero.spellPower}`);
         this.heroLvlText.setText(`Stufe ${state.hero.level}  ATK ${state.hero.attack}  DEF ${state.hero.defense}  WIS ${state.hero.knowledge}`);
       }
-      // Check victory artifact conditions
       const vc = this.mission.victoryCondition;
       if (vc.type === 'artifact' && vc.artifactId === res.artifactId) {
+        // Fix 3+4: show narrative dialog then overlay; no delayedCall so timer can't be paused away
         triggerEvent(this.mission.victoryEventId);
-        this.time.delayedCall(600, () => this.showVictoryOverlay());
+        const ev = STORY_EVENTS[this.mission.victoryEventId];
+        this.time.delayedCall(600, () => ev ? this.launchDialog(ev) : this.showVictoryOverlay());
+        return true;  // caller must not process enemies after this
       } else if (vc.type === 'artifact_then_reach' && vc.artifactId === res.artifactId && state.missionVictoryPhase < 1) {
-        // Phase 1 unlocked: show transition dialog, then reach victoryTile
         setVictoryPhase(1);
         saveGame();
         this.updateObjectiveBanner();
@@ -636,8 +638,10 @@ export class AdventureMap extends Phaser.Scene {
         } else if (state.heroTile.x === this.mission.victoryTile.x && state.heroTile.y === this.mission.victoryTile.y) {
           this.time.delayedCall(400, () => this.onHeroArrived(state.heroTile.x, state.heroTile.y));
         }
+        return true;
       }
     }
+    return false;
   }
 
   private showFloat(msg: string, color: number, tileCol: number, tileRow: number): void {
@@ -699,6 +703,7 @@ export class AdventureMap extends Phaser.Scene {
     zone.on('pointerover', () => btnTxt.setColor('#ffffff'));
     zone.on('pointerout',  () => btnTxt.setColor('#ffd060'));
     zone.on('pointerdown', () => {
+      zone.disableInteractive();  // Fix 2: prevent double-click from calling advanceMission twice
       music.stop();
       if (isLastMission) {
         this.scene.stop('AdventureMap');
@@ -716,19 +721,12 @@ export class AdventureMap extends Phaser.Scene {
     this.scene.pause('AdventureMap');
     this.scene.launch('DialogScene', { event: ev });
     this.scene.get('DialogScene').events.once('dialog_complete', (onComplete?: string) => {
-      if (onComplete === 'victory') {
-        music.stop();
-        this.scene.stop('AdventureMap');
-        this.scene.start('VictoryScene');
-      } else if (onComplete === 'mission_complete') {
-        music.stop();
-        advanceMission();
-        saveGame();
-        this.scene.stop('AdventureMap');
-        this.scene.start('CampaignScene');
+      this.scene.resume('AdventureMap');
+      if (onComplete === 'mission_complete' || onComplete === 'victory') {
+        // Fix 3+7: show overlay after narrative dialog; handles all victory types uniformly
+        this.showVictoryOverlay();
       } else {
-        this.scene.resume('AdventureMap');
-        // After phase dialog, auto-trigger victory if already at victory tile
+        // Phase transition dialog closed — auto-trigger victory if hero already at victory tile
         if (state.missionVictoryPhase >= 1) {
           const vc = this.mission.victoryCondition;
           if ((vc.type === 'boss_then_reach' || vc.type === 'artifact_then_reach') &&

@@ -65,6 +65,7 @@ export class Boot extends Phaser.Scene {
 
   // ── Full-map canvas ────────────────────────────────────────────────────────
   private generateMapTexture(tiles: number[][], key: string): void {
+    if (this.textures.exists(key)) return;
     const W = MAP_COLS * TILE_SIZE; // 960
     const H = MAP_ROWS * TILE_SIZE; // 720
     const tex = this.textures.createCanvas(key, W, H)!;
@@ -550,6 +551,7 @@ export class Boot extends Phaser.Scene {
     const W = COMBAT_CELL_W - 8, H = COMBAT_CELL_H - 14; // 72 × 61
 
     Object.entries(units).forEach(([id, color]) => {
+      if (this.textures.exists(`unit_${id}`)) return;  // Fix 6: guard against Boot scene restart
       const tex = this.textures.createCanvas(`unit_${id}`, W, H)!;
       const ctx = tex.context as unknown as CanvasRenderingContext2D;
 
@@ -795,6 +797,7 @@ export class Boot extends Phaser.Scene {
   }
 
   private generateHeroTexture(): void {
+    if (this.textures.exists('hero')) return;
     const tex = this.textures.createCanvas('hero', 40, 40)!;
     const c = tex.context as unknown as CanvasRenderingContext2D;
     const g = c.createRadialGradient(18,16,0,20,20,16);
@@ -808,6 +811,7 @@ export class Boot extends Phaser.Scene {
   }
 
   private generateEnemyMarkerTexture(): void {
+    if (this.textures.exists('enemy_marker')) return;
     const tex = this.textures.createCanvas('enemy_marker', 40, 40)!;
     const c = tex.context as unknown as CanvasRenderingContext2D;
     const g = c.createLinearGradient(20,2,20,38);
@@ -825,6 +829,7 @@ export class Boot extends Phaser.Scene {
   }
 
   private generateResourceTextures(): void {
+    if (this.textures.exists('resource_gold')) return;
     const gt = this.textures.createCanvas('resource_gold', 32, 32)!;
     const gc = gt.context as unknown as CanvasRenderingContext2D;
     [[18,20,9],[12,20,8],[24,18,7],[10,16,6],[22,24,5]].forEach(([gcx,gcy,rv]) => {
