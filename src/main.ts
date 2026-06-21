@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from './constants';
 import { Boot } from './scenes/Boot';
 import { MainMenu } from './scenes/MainMenu';
 import { HeroSelectScene } from './scenes/HeroSelectScene';
+import { HeroScreen } from './scenes/HeroScreen';
 import { AdventureMap } from './scenes/AdventureMap';
 import { CombatScene } from './scenes/CombatScene';
 import { DialogScene } from './scenes/DialogScene';
@@ -21,7 +22,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [
     Boot, MainMenu, HeroSelectScene,
     CampaignScene, AdventureMap, CombatScene, DialogScene,
-    CityScene, LevelUpScene,
+    CityScene, LevelUpScene, HeroScreen,
     VictoryScene, GameOverScene,
   ],
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },

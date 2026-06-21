@@ -384,8 +384,22 @@ export class AdventureMap extends Phaser.Scene {
     }).setOrigin(0.5);
     this.renderSideObjectives(sx);
 
-    this.add.text(sx + 14, GAME_HEIGHT - 58,
+    this.add.text(sx + 14, GAME_HEIGHT - 96,
       'Klick=Bewegen  △=Kampf  📜=Lore', { fontSize: '9px', color: '#504030' });
+
+    // Hero overview button
+    const hbtnY = GAME_HEIGHT - 84;
+    const hbtnG = this.add.graphics();
+    hbtnG.fillStyle(0x0e0c1a, 1); hbtnG.lineStyle(1, 0x6040a0, 1);
+    hbtnG.fillRoundedRect(sx + 16, hbtnY, SIDEBAR_WIDTH - 32, 30, 5);
+    hbtnG.strokeRoundedRect(sx + 16, hbtnY, SIDEBAR_WIDTH - 32, 30, 5);
+    const hbtnTxt = this.add.text(sx + SIDEBAR_WIDTH / 2, hbtnY + 15, '📋  Heldenübersicht  [H]', {
+      fontSize: '11px', fontFamily: 'Georgia, serif', color: '#a080d0',
+    }).setOrigin(0.5);
+    const hz = this.add.zone(sx + SIDEBAR_WIDTH / 2, hbtnY + 15, SIDEBAR_WIDTH - 32, 30).setInteractive({ cursor: 'pointer' });
+    hz.on('pointerdown', () => this.openHeroScreen());
+    hz.on('pointerover', () => hbtnTxt.setColor('#d0b0ff'));
+    hz.on('pointerout',  () => hbtnTxt.setColor('#a080d0'));
 
     const btnY = GAME_HEIGHT - 46;
     const btnG = this.add.graphics();
@@ -399,6 +413,14 @@ export class AdventureMap extends Phaser.Scene {
     z.on('pointerdown', () => this.endTurn());
     z.on('pointerover', () => btnTxt.setColor('#ffffff'));
     z.on('pointerout',  () => btnTxt.setColor('#ffd060'));
+  }
+
+  private openHeroScreen(): void {
+    this.scene.pause('AdventureMap');
+    this.scene.launch('HeroScreen');
+    this.scene.get('HeroScreen').events.once('heroscreen_close', () => {
+      this.scene.resume('AdventureMap');
+    });
   }
 
   private refreshArmyPanel(sx: number): void {
@@ -501,6 +523,7 @@ export class AdventureMap extends Phaser.Scene {
       if (!hex) return;
       this.handleTileClick(hex[0], hex[1]);
     });
+    this.input.keyboard?.on('keydown-H', () => this.openHeroScreen());
   }
 
   private handleTileClick(col: number, row: number): void {
