@@ -20,6 +20,15 @@ export interface LoreItem {
   tileY: number;
 }
 
+export interface SideObjective {
+  id: string;
+  description: string;
+  type: 'defeat_all_enemies' | 'collect_all_gold' | 'discover_all_lore' | 'defeat_enemy';
+  enemyId?: string;
+  goldReward?: number;
+  unitReward?: { unitId: string; count: number };
+}
+
 export interface MissionData {
   id: string; title: string; subtitle: string; description: string;
   mapTiles: number[][];
@@ -34,6 +43,7 @@ export interface MissionData {
   victoryCondition: VictoryCondition;
   phaseOneEventId?: string;
   loreItems?: LoreItem[];
+  sideObjectives?: SideObjective[];
 }
 
 export interface UnitDef {
@@ -134,4 +144,5 @@ export interface GameState {
   completedMissions: number[];
   missionVictoryPhase: number;  // 0=start  1=first condition met  2=done
   collectedLore: string[];
+  completedSideObjectives: string[];
 }

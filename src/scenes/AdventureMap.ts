@@ -10,8 +10,10 @@ import {
   state, isEnemyDefeated, isEventTriggered, triggerEvent,
   isResourceCollected, collectResource, applyArtifact, movementPoints,
   updateFog, saveGame, advanceMission, setVictoryPhase,
-  collectLore, isLoreCollected,
+  collectLore, isLoreCollected, completeSideObjective, isSideObjectiveCompleted,
 } from '../GameState';
+import type { SideObjective } from '../types';
+import { UNIT_DEFS } from '../data/units';
 import { music } from '../audio/ChiptuneEngine';
 import type { EnemyEncounter, ResourceOnMap, MissionData } from '../types';
 
@@ -69,6 +71,7 @@ export class AdventureMap extends Phaser.Scene {
   private resourceSprites = new Map<string, Phaser.GameObjects.Image>();
   private loreSprites     = new Map<string, Phaser.GameObjects.Text>();
   private objectiveBannerText!: Phaser.GameObjects.Text;
+  private sideObjectiveTexts: Phaser.GameObjects.Text[] = [];
   private highlightLayer!: Phaser.GameObjects.Container;
   private fogLayer!:       Phaser.GameObjects.Graphics;
   private minimapGfx!:    Phaser.GameObjects.Graphics;
@@ -375,11 +378,16 @@ export class AdventureMap extends Phaser.Scene {
 
     // Mini-map is drawn by renderMinimap() at y=468
 
-    this.add.text(sx + 14, GAME_HEIGHT - 90,
-      'Klick = Bewegen  •  Rotes △ = Kampf\nGold = Ressource  •  Lila = Artefakt',
-      { fontSize: '10px', color: '#604030', lineSpacing: 3 });
+    this.divider(sx + 8, 568, SIDEBAR_WIDTH - 16);
+    this.add.text(sx + SIDEBAR_WIDTH / 2, 578, '── NEBENZIELE ──', {
+      fontSize: '13px', fontFamily: 'Georgia, serif', color: '#c8a040',
+    }).setOrigin(0.5);
+    this.renderSideObjectives(sx);
 
-    const btnY = GAME_HEIGHT - 50;
+    this.add.text(sx + 14, GAME_HEIGHT - 58,
+      'Klick=Bewegen  △=Kampf  📜=Lore', { fontSize: '9px', color: '#504030' });
+
+    const btnY = GAME_HEIGHT - 46;
     const btnG = this.add.graphics();
     btnG.fillStyle(0x2a1a08, 1); btnG.lineStyle(2, 0xc8a040, 1);
     btnG.fillRoundedRect(sx + 16, btnY, SIDEBAR_WIDTH - 32, 38, 6);
@@ -408,6 +416,73 @@ export class AdventureMap extends Phaser.Scene {
       ]);
       yo += 46;
     });
+  }
+
+  private renderSideObjectives(sx: number): void {
+    this.sideObjectiveTexts.forEach(t => t.destroy());
+    this.sideObjectiveTexts = [];
+    const objectives = this.mission.sideObjectives ?? [];
+    objectives.forEach((obj, i) => {
+      const done = isSideObjectiveCompleted(obj.id);
+      const prefix = done ? '✓ ' : '◇ ';
+      const color  = done ? '#60c060' : '#b0a080';
+      const reward = obj.goldReward
+        ? `+${obj.goldReward}G`
+        : obj.unitReward ? `+${obj.unitReward.count} ${UNIT_DEFS[obj.unitReward.unitId]?.symbol ?? '?'}` : '';
+      const t = this.add.text(sx + 12, 596 + i * 30,
+        `${prefix}${obj.description}\n   ↳ Belohnung: ${reward}`, {
+          fontSize: '9px', color, wordWrap: { width: SIDEBAR_WIDTH - 24 }, lineSpacing: 1,
+        });
+      this.sideObjectiveTexts.push(t);
+    });
+  }
+
+  private checkSideObjectives(): void {
+    const sx = MAP_W;
+    (this.mission.sideObjectives ?? []).forEach(obj => {
+      if (isSideObjectiveCompleted(obj.id)) return;
+      let achieved = false;
+      if (obj.type === 'defeat_all_enemies') {
+        achieved = this.mission.enemies.every(e => isEnemyDefeated(e.id));
+      } else if (obj.type === 'collect_all_gold') {
+        achieved = this.mission.resources.filter(r => r.type === 'gold').every(r => isResourceCollected(r.id));
+      } else if (obj.type === 'discover_all_lore') {
+        achieved = (this.mission.loreItems ?? []).every(l => isLoreCollected(l.id));
+      } else if (obj.type === 'defeat_enemy' && obj.enemyId) {
+        achieved = isEnemyDefeated(obj.enemyId);
+      }
+      if (achieved) this.awardSideObjective(obj, sx);
+    });
+  }
+
+  private awardSideObjective(obj: SideObjective, sx: number): void {
+    completeSideObjective(obj.id);
+    if (obj.goldReward) {
+      state.gold += obj.goldReward;
+      this.goldText.setText(`⚙ Gold: ${state.gold}`);
+      this.showFloatCenter(`Nebenziel: ${obj.description} (+${obj.goldReward} Gold)`, 0xffd060);
+    } else if (obj.unitReward) {
+      const def = UNIT_DEFS[obj.unitReward.unitId];
+      if (def) {
+        const existing = state.playerArmy.find(u => u.id === obj.unitReward!.unitId);
+        if (existing) { existing.count += obj.unitReward.count; }
+        else state.playerArmy.push({ ...def, count: obj.unitReward.count, currentHp: def.maxHp });
+        this.refreshArmyPanel(sx);
+        this.showFloatCenter(`Nebenziel: ${obj.description} (+${obj.unitReward.count} ${def.name})`, 0x80ffaa);
+      }
+    }
+    this.renderSideObjectives(sx);
+    saveGame();
+  }
+
+  private showFloatCenter(msg: string, color: number): void {
+    const t = this.add.text(MAP_W / 2, GAME_HEIGHT / 2 - 60, msg, {
+      fontSize: '15px', fontFamily: 'Georgia, serif',
+      color: `#${color.toString(16).padStart(6, '0')}`,
+      stroke: '#000000', strokeThickness: 3,
+      wordWrap: { width: 520 }, align: 'center',
+    }).setOrigin(0.5).setDepth(70);
+    this.tweens.add({ targets: t, y: t.y - 50, alpha: 0, duration: 2500, onComplete: () => t.destroy() });
   }
 
   private divider(x: number, y: number, w: number): void {
@@ -461,6 +536,7 @@ export class AdventureMap extends Phaser.Scene {
       collectLore(lore.id);
       this.loreSprites.get(lore.id)?.destroy();
       this.loreSprites.delete(lore.id);
+      this.checkSideObjectives();
       const ev = STORY_EVENTS[lore.id];
       if (ev) { this.launchDialog(ev); return; }
     }
@@ -502,6 +578,7 @@ export class AdventureMap extends Phaser.Scene {
       state.gold += res.goldValue;
       this.goldText.setText(`⚙ Gold: ${state.gold}`);
       this.showFloat(`+${res.goldValue} Gold`, 0xffd060, res.tileX, res.tileY);
+      this.checkSideObjectives();
     } else if (res.type === 'artifact' && res.artifactId) {
       applyArtifact(res.artifactId);
       const art = ARTIFACTS.find(a => a.id === res.artifactId);
@@ -581,6 +658,7 @@ export class AdventureMap extends Phaser.Scene {
         this.enemySprites.delete(encounter.id);
         this.refreshArmyPanel(MAP_W);
         this.heroLvlText.setText(`Stufe ${state.hero.level}  ATK ${state.hero.attack}  DEF ${state.hero.defense}  WIS ${state.hero.knowledge}`);
+        this.checkSideObjectives();
 
         // Check if this was the boss for a boss_then_reach mission
         const vc = this.mission.victoryCondition;

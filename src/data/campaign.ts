@@ -28,6 +28,18 @@ export const CAMPAIGN: MissionData[] = [
       { id: 'lore_eriador_edain', title: 'Stein der Edain',  text: '', tileX: 3, tileY: 6  },
       { id: 'lore_eriador_road',  title: 'Alter Wegstein',   text: '', tileX: 7, tileY: 10 },
     ],
+    sideObjectives: [
+      {
+        id: 'eriador_all_enemies', type: 'defeat_all_enemies',
+        description: 'Besiege alle feindlichen Patrouillen in Eriador',
+        goldReward: 350,
+      },
+      {
+        id: 'eriador_forest_ambush', type: 'defeat_enemy', enemyId: 'forest_ambush',
+        description: 'Vernichte den Hinterhalt im Wald',
+        unitReward: { unitId: 'numenorean_warrior', count: 5 },
+      },
+    ],
   },
 
   // ── Mission 1: Gondors Gründung ──────────────────────────────────────────────
@@ -134,6 +146,18 @@ export const CAMPAIGN: MissionData[] = [
       { id: 'lore_gondor_anduin', title: 'Marmorinschrift', text: '', tileX: 3,  tileY: 9 },
       { id: 'lore_gondor_camp',   title: 'Gondors Erstes Lager', text: '', tileX: 11, tileY: 4 },
     ],
+    sideObjectives: [
+      {
+        id: 'gondor_collect_gold', type: 'collect_all_gold',
+        description: 'Sichere alle Goldvorräte auf dem Weg nach Gondor',
+        unitReward: { unitId: 'numenorean_warrior', count: 6 },
+      },
+      {
+        id: 'gondor_defeat_nazgul', type: 'defeat_enemy', enemyId: 'gondor_nazgul',
+        description: 'Verjage den Nazgûl-Vorboten aus Gondors Grenzen',
+        goldReward: 300,
+      },
+    ],
   },
 
   // ── Mission 2: Der Bergpass / Moria ──────────────────────────────────────────
@@ -218,6 +242,18 @@ export const CAMPAIGN: MissionData[] = [
     loreItems: [
       { id: 'lore_moria_khazad', title: 'Zwerg-Inschrift',       text: '', tileX: 5, tileY: 5 },
       { id: 'lore_moria_scroll', title: 'Verlorenes Tagebuch',   text: '', tileX: 9, tileY: 8 },
+    ],
+    sideObjectives: [
+      {
+        id: 'moria_discover_lore', type: 'discover_all_lore',
+        description: 'Entziffere alle Inschriften in Morias Tiefen',
+        goldReward: 400,
+      },
+      {
+        id: 'moria_troll_pack', type: 'defeat_enemy', enemyId: 'moria_troll_pack',
+        description: 'Vernichte das Troll-Rudel im Herzen Morias',
+        unitReward: { unitId: 'elven_warrior', count: 4 },
+      },
     ],
   },
 
@@ -312,6 +348,18 @@ export const CAMPAIGN: MissionData[] = [
       { id: 'lore_rhun_steppe',    title: 'Fremdartige Inschrift', text: '', tileX: 2,  tileY: 4 },
       { id: 'lore_rhun_wasteland', title: 'Zerbrochene Figur',     text: '', tileX: 10, tileY: 8 },
     ],
+    sideObjectives: [
+      {
+        id: 'rhun_defeat_commander', type: 'defeat_enemy', enemyId: 'rhun_commander',
+        description: 'Besiege den Rhûn-Kommandanten und breche den Führungswillen',
+        goldReward: 500,
+      },
+      {
+        id: 'rhun_all_enemies', type: 'defeat_all_enemies',
+        description: 'Befreie die gesamten Ostlande von Saurons Truppen',
+        unitReward: { unitId: 'elven_cavalry', count: 3 },
+      },
+    ],
   },
 
   // ── Mission 4: Die Letzte Allianz / Barad-dûr ────────────────────────────────
@@ -397,6 +445,18 @@ export const CAMPAIGN: MissionData[] = [
     loreItems: [
       { id: 'lore_mordor_edict',    title: 'Schwarzes Edikt',    text: '', tileX: 6,  tileY: 10 },
       { id: 'lore_mordor_elbereth', title: 'Elfische Inschrift', text: '', tileX: 11, tileY: 7  },
+    ],
+    sideObjectives: [
+      {
+        id: 'mordor_collect_gold', type: 'collect_all_gold',
+        description: 'Sichere alle Goldvorräte für die Allianz',
+        unitReward: { unitId: 'elven_cavalry', count: 4 },
+      },
+      {
+        id: 'mordor_defeat_both_nazgul', type: 'defeat_enemy', enemyId: 'mordor_nazgul_2',
+        description: 'Besiege beide Nazgûl-Schwadronen und schwäche Saurons Griff',
+        goldReward: 600,
+      },
     ],
   },
 ];

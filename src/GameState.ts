@@ -39,6 +39,7 @@ export function buildInitialState(heroId: string): GameState {
     completedMissions: [],
     missionVictoryPhase: 0,
     collectedLore: [],
+    completedSideObjectives: [],
   };
 }
 
@@ -86,6 +87,7 @@ export function loadGame(): boolean {
     if (!saved.completedMissions) saved.completedMissions = [];
     if (saved.missionVictoryPhase === undefined) saved.missionVictoryPhase = 0;
     if (!saved.collectedLore) saved.collectedLore = [];
+    if (!saved.completedSideObjectives) saved.completedSideObjectives = [];
     state = saved;
     return true;
   } catch { return false; }
@@ -106,6 +108,8 @@ export function isResourceCollected(id: string): boolean { return state.collecte
 export function collectLore(id: string): void      { if (!state.collectedLore.includes(id)) state.collectedLore.push(id); }
 export function isLoreCollected(id: string): boolean { return state.collectedLore.includes(id); }
 export function setVictoryPhase(phase: number): void { state.missionVictoryPhase = phase; }
+export function completeSideObjective(id: string): void { if (!state.completedSideObjectives.includes(id)) state.completedSideObjectives.push(id); }
+export function isSideObjectiveCompleted(id: string): boolean { return state.completedSideObjectives.includes(id); }
 
 export function gainExperience(amount: number): void {
   state.hero.experience += amount;
@@ -164,4 +168,5 @@ export function advanceMission(): void {
   state.fogMap = emptyFog();
   state.missionVictoryPhase = 0;
   state.collectedLore = [];
+  state.completedSideObjectives = [];
 }
