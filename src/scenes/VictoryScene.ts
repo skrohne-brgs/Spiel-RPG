@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants';
+import { music } from '../audio/ChiptuneEngine';
 
 export class VictoryScene extends Phaser.Scene {
   constructor() { super({ key: 'VictoryScene' }); }
 
   create(): void {
+    music.play('victory');
     // Starfield
     for (let i = 0; i < 300; i++) {
       this.add.circle(
@@ -38,9 +40,11 @@ export class VictoryScene extends Phaser.Scene {
 
     // Buttons
     this.createBtn(GAME_WIDTH / 2 - 140, 520, 'NOCHMAL SPIELEN', () => {
+      music.stop();
       this.scene.start('MainMenu');
     });
     this.createBtn(GAME_WIDTH / 2 + 140, 520, 'HAUPTMENÜ', () => {
+      music.stop();
       this.scene.start('MainMenu');
     });
 

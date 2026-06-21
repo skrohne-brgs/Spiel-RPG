@@ -10,6 +10,7 @@ export const STORY_EVENTS: Record<string, StoryEvent> = {
       { speaker: 'Anárion', text: 'Ich stehe an Eurer Seite, Vater. Bis zum Ende.' },
     ],
   },
+
   eregion: {
     id: 'eregion',
     lines: [
@@ -19,6 +20,35 @@ export const STORY_EVENTS: Record<string, StoryEvent> = {
       { speaker: 'Anárion', text: 'Vorwärts dann – Mordor liegt noch im Osten.' },
     ],
   },
+
+  forest_warning: {
+    id: 'forest_warning',
+    lines: [
+      { speaker: 'Anárion', text: 'Vater, die Waldränder – sie sind voller feindlicher Späher. Die Orks haben Bogenschützen in den Bäumen positioniert.' },
+      { speaker: 'Elendil', text: 'Dann halten wir die Augen offen. Ein Hinterhalt im Wald ist keine Niederlage – wenn wir vorbereitet sind.' },
+      { speaker: 'Anárion', text: 'Unsere Waldläufer haben mehr Erfahrung als diese Orks. Wir kämpfen uns durch.' },
+    ],
+  },
+
+  ancient_road: {
+    id: 'ancient_road',
+    lines: [
+      { speaker: 'Elendil', text: 'Seht ihr das, mein Sohn? Diese Straße ist alt – älter als Númenors Einfluss in Mittelerde. Hier marschierten einst die Heere der Elben.' },
+      { speaker: 'Anárion', text: 'Sie führt direkt nach Osten. Wenn Saurons Kräfte diese Route halten, schneiden sie uns von den Bergpässen ab.' },
+      { speaker: 'Elendil', text: 'Dann müssen wir sie zurückerobern. Diese Straße gehört wieder den freien Völkern Mittelerdes.' },
+    ],
+  },
+
+  wasteland_signs: {
+    id: 'wasteland_signs',
+    lines: [
+      { speaker: 'Anárion', text: 'Diese Erde... verbrannt, verwüstet. Das ist kein natürliches Ödland. Saurons Feuer haben hier gewütet.' },
+      { speaker: 'Elendil', text: 'Ja. Das Ödland erstreckt sich bis zu den Toren Mordors. Jedes versengte Feld ist ein weiteres Opfer seines Willens.' },
+      { speaker: 'Anárion', text: 'Und dennoch marschieren wir weiter. Weil jemand es tun muss.' },
+      { speaker: 'Elendil', text: 'Das ist die Last der Númenórer, mein Sohn. Wir sind nicht nur Überlebende – wir sind Beschützer dieser Welt.' },
+    ],
+  },
+
   mordor_border: {
     id: 'mordor_border',
     lines: [
@@ -29,12 +59,14 @@ export const STORY_EVENTS: Record<string, StoryEvent> = {
     ],
     onComplete: 'victory',
   },
+
   combat_win: {
     id: 'combat_win',
     lines: [
       { speaker: 'Elendil', text: 'Der Feind weicht zurück. Númenórs Erben kämpfen noch.' },
     ],
   },
+
   combat_lose: {
     id: 'combat_lose',
     lines: [

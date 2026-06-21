@@ -10,65 +10,66 @@ import { ARTIFACTS } from '../data/artifacts';
 import {
   state, isEnemyDefeated, isEventTriggered, triggerEvent,
   isResourceCollected, collectResource, applyArtifact, movementPoints,
+  updateFog, saveGame,
 } from '../GameState';
+import { music } from '../audio/ChiptuneEngine';
 import type { EnemyEncounter, ResourceOnMap } from '../types';
 
-const MAP_W = MAP_COLS * TILE_SIZE; // 960 (map texture width)
+const MAP_W = MAP_COLS * TILE_SIZE; // 960
 
 // ── Hex helpers ───────────────────────────────────────────────────────────────
 
-/** Pixel centre of hex cell (col, row) — pointy-top, odd-r offset */
-function hexCenter(col: number, row: number): { x: number; y: number } {
+function hexCenter(col: number, row: number) {
   return {
     x: (col + (row % 2 === 1 ? 1 : 0.5)) * HEX_W,
     y: HEX_OFFSET_Y + row * 1.5 * HEX_SIZE + HEX_SIZE,
   };
 }
 
-/** 6 valid neighbours of (col, row) */
 function hexNeighbors(col: number, row: number): [number, number][] {
   const odd = row % 2 === 1;
   return ([
-    [col - 1, row],
-    [col + 1, row],
-    [col + (odd ? 0 : -1), row - 1],
-    [col + (odd ? 1 :  0), row - 1],
-    [col + (odd ? 0 : -1), row + 1],
-    [col + (odd ? 1 :  0), row + 1],
-  ] as [number, number][]).filter(([c, r]) =>
-    c >= 0 && c < MAP_COLS && r >= 0 && r < MAP_ROWS,
-  );
+    [col - 1, row], [col + 1, row],
+    [col + (odd ? 0 : -1), row - 1], [col + (odd ? 1 : 0), row - 1],
+    [col + (odd ? 0 : -1), row + 1], [col + (odd ? 1 : 0), row + 1],
+  ] as [number, number][]).filter(([c, r]) => c >= 0 && c < MAP_COLS && r >= 0 && r < MAP_ROWS);
 }
 
-/** Nearest hex cell to pixel (px, py); null if too far from map */
 function pixelToHex(px: number, py: number): [number, number] | null {
   let best = Infinity, bc = 0, br = 0;
-  for (let r = 0; r < MAP_ROWS; r++) {
+  for (let r = 0; r < MAP_ROWS; r++)
     for (let c = 0; c < MAP_COLS; c++) {
       const { x, y } = hexCenter(c, r);
       const d = (px - x) ** 2 + (py - y) ** 2;
       if (d < best) { best = d; bc = c; br = r; }
     }
-  }
   return best < HEX_W * HEX_W ? [bc, br] : null;
 }
 
-/** Array of 6 vertex positions for drawing a hexagon */
-function hexPts(cx: number, cy: number, r: number): { x: number; y: number }[] {
+function hexPts(cx: number, cy: number, r: number) {
   return Array.from({ length: 6 }, (_, i) => {
     const a = (Math.PI / 3) * i - Math.PI / 2;
     return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
   });
 }
 
+// Minimap terrain colors
+const MM_COL: Record<number, number> = {
+  0: 0x4a8a28, 1: 0x6a5a4a, 2: 0x265c18,
+  3: 0x1a5a8a, 4: 0x4a3a2a, 5: 0x8a7050,
+  6: 0x7a6030, 7: 0x3a3a5a,
+};
+
 // ──────────────────────────────────────────────────────────────────────────────
 
 export class AdventureMap extends Phaser.Scene {
   private heroSprite!: Phaser.GameObjects.Image;
-  private enemySprites  = new Map<string, Phaser.GameObjects.Image>();
+  private enemySprites   = new Map<string, Phaser.GameObjects.Image>();
   private resourceSprites = new Map<string, Phaser.GameObjects.Image>();
   private highlightLayer!: Phaser.GameObjects.Container;
-  private reachableTiles = new Set<string>();
+  private fogLayer!:       Phaser.GameObjects.Graphics;
+  private minimapGfx!:    Phaser.GameObjects.Graphics;
+  private reachableTiles  = new Set<string>();
   private movementLeft = 0;
   private turn = 1;
   private goldText!:    Phaser.GameObjects.Text;
@@ -82,17 +83,27 @@ export class AdventureMap extends Phaser.Scene {
   create(): void {
     this.cameras.main.setBackgroundColor('#0a120a');
     this.movementLeft = movementPoints();
+
     this.renderMap();
     this.renderCities();
     this.renderResources();
     this.createEnemyMarkers();
     this.createHero();
+    this.createFogLayer();
     this.createSidebar();
     this.setupInput();
+
+    // Initial fog reveal around starting position
+    updateFog(state.heroTile.x, state.heroTile.y);
+    this.renderFog();
+    this.updateSpriteVisibility();
+    this.renderMinimap();
+
+    music.play('map');
     this.triggerStartEvent();
   }
 
-  // ── Map rendering ──────────────────────────────────────────────────────────
+  // ── Map ────────────────────────────────────────────────────────────────────
 
   private renderMap(): void {
     this.add.image(MAP_W / 2, GAME_HEIGHT / 2, 'map_base').setDepth(0);
@@ -112,7 +123,7 @@ export class AdventureMap extends Phaser.Scene {
       if (isResourceCollected(r.id)) return;
       const key = r.type === 'artifact' ? 'resource_artifact' : 'resource_gold';
       const { x, y } = hexCenter(r.tileX, r.tileY);
-      const sprite = this.add.image(x, y, key).setDepth(6).setScale(0.85);
+      const sprite = this.add.image(x, y, key).setDepth(6).setScale(0.85).setAlpha(0);
       this.tweens.add({ targets: sprite, y: y - 3, duration: 1200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.resourceSprites.set(r.id, sprite);
     });
@@ -122,7 +133,7 @@ export class AdventureMap extends Phaser.Scene {
     ENEMY_ENCOUNTERS.forEach(enc => {
       if (isEnemyDefeated(enc.id)) return;
       const { x, y } = hexCenter(enc.tileX, enc.tileY);
-      const sprite = this.add.image(x, y, 'enemy_marker').setDepth(5).setScale(0.88);
+      const sprite = this.add.image(x, y, 'enemy_marker').setDepth(5).setScale(0.88).setAlpha(0);
       this.tweens.add({ targets: sprite, y: y - 5, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.enemySprites.set(enc.id, sprite);
     });
@@ -134,6 +145,90 @@ export class AdventureMap extends Phaser.Scene {
     this.highlightLayer = this.add.container(0, 0).setDepth(3);
     this.computeReachable();
     this.renderHighlights();
+  }
+
+  // ── Fog of War ─────────────────────────────────────────────────────────────
+
+  private createFogLayer(): void {
+    this.fogLayer = this.add.graphics().setDepth(11);
+  }
+
+  private renderFog(): void {
+    this.fogLayer.clear();
+    for (let row = 0; row < MAP_ROWS; row++) {
+      for (let col = 0; col < MAP_COLS; col++) {
+        const fog = state.fogMap[row][col];
+        if (fog === 2) continue;
+        const { x, y } = hexCenter(col, row);
+        const pts = hexPts(x, y, HEX_SIZE + 0.5);
+        this.fogLayer.fillStyle(0x000000, fog === 0 ? 1.0 : 0.58);
+        this.fogLayer.fillPoints(pts, true);
+      }
+    }
+  }
+
+  private updateSpriteVisibility(): void {
+    // Resources & enemies only visible when in current sight range (state 2)
+    RESOURCES.forEach(r => {
+      const sprite = this.resourceSprites.get(r.id);
+      if (sprite) sprite.setAlpha(state.fogMap[r.tileY][r.tileX] === 2 ? 1 : 0);
+    });
+    ENEMY_ENCOUNTERS.forEach(enc => {
+      const sprite = this.enemySprites.get(enc.id);
+      if (sprite) sprite.setAlpha(state.fogMap[enc.tileY][enc.tileX] === 2 ? 1 : 0);
+    });
+  }
+
+  // ── Minimap ────────────────────────────────────────────────────────────────
+
+  private renderMinimap(): void {
+    if (!this.minimapGfx) {
+      this.minimapGfx = this.add.graphics().setDepth(50);
+    }
+    const mx = MAP_W + 10, my = 468, mw = SIDEBAR_WIDTH - 20, mh = 98;
+    const tw = mw / MAP_COLS, th = mh / MAP_ROWS;
+    this.minimapGfx.clear();
+
+    // Background
+    this.minimapGfx.fillStyle(0x000000, 0.85);
+    this.minimapGfx.fillRect(mx, my, mw, mh);
+
+    // Terrain
+    for (let r = 0; r < MAP_ROWS; r++) {
+      for (let c = 0; c < MAP_COLS; c++) {
+        const fog = state.fogMap[r][c];
+        if (fog === 0) continue;
+        this.minimapGfx.fillStyle(MM_COL[MAP_TILES[r][c]], fog === 1 ? 0.35 : 0.9);
+        this.minimapGfx.fillRect(mx + c * tw, my + r * th, tw - 0.3, th - 0.3);
+      }
+    }
+
+    // Cities (gold dots)
+    CITIES.forEach(city => {
+      if (state.fogMap[city.tileY][city.tileX] > 0) {
+        this.minimapGfx.fillStyle(0xffd060, 1);
+        this.minimapGfx.fillCircle(mx + city.tileX * tw + tw / 2, my + city.tileY * th + th / 2, 2.5);
+      }
+    });
+
+    // Enemies (red dots, only when visible)
+    ENEMY_ENCOUNTERS.forEach(enc => {
+      if (!isEnemyDefeated(enc.id) && state.fogMap[enc.tileY][enc.tileX] === 2) {
+        this.minimapGfx.fillStyle(0xff3333, 1);
+        this.minimapGfx.fillCircle(mx + enc.tileX * tw + tw / 2, my + enc.tileY * th + th / 2, 2);
+      }
+    });
+
+    // Hero (bright gold)
+    this.minimapGfx.fillStyle(0xffffff, 1);
+    this.minimapGfx.fillCircle(
+      mx + state.heroTile.x * tw + tw / 2,
+      my + state.heroTile.y * th + th / 2, 3,
+    );
+
+    // Border
+    this.minimapGfx.lineStyle(1, 0xc8a040, 0.7);
+    this.minimapGfx.strokeRect(mx, my, mw, mh);
   }
 
   // ── Sidebar ────────────────────────────────────────────────────────────────
@@ -152,7 +247,6 @@ export class AdventureMap extends Phaser.Scene {
     const h = state.hero;
     this.add.text(sx + 14, 38, h.name, { fontSize: '22px', fontFamily: 'Georgia, serif', color: '#ffd060' });
     this.add.text(sx + 14, 63, h.title, { fontSize: '11px', color: '#806040', wordWrap: { width: SIDEBAR_WIDTH - 28 } });
-
     this.heroLvlText = this.add.text(sx + 14, 86,
       `Stufe ${h.level}  ATK ${h.attack}  DEF ${h.defense}  WIS ${h.knowledge}`, { fontSize: '12px', color: '#c0b090' });
     this.manaText = this.add.text(sx + 14, 103,
@@ -172,25 +266,32 @@ export class AdventureMap extends Phaser.Scene {
     this.add.text(sx + SIDEBAR_WIDTH / 2, 384, '── RESSOURCEN ──', {
       fontSize: '14px', fontFamily: 'Georgia, serif', color: '#c8a040',
     }).setOrigin(0.5);
-
     this.goldText = this.add.text(sx + 14, 404, `⚙ Gold: ${state.gold}`, { fontSize: '15px', color: '#ffd060' });
-    this.divider(sx + 8, 430, SIDEBAR_WIDTH - 16);
-    this.moveText = this.add.text(sx + 14, 444,
+
+    this.divider(sx + 8, 428, SIDEBAR_WIDTH - 16);
+    this.moveText = this.add.text(sx + 14, 442,
       `Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`, { fontSize: '12px', color: '#c0b090' });
 
-    this.add.text(sx + 14, GAME_HEIGHT - 130,
-      'Klick = Bewegen\nRotes Dreieck = Kampf\nGold = Ressource\nLila = Artefakt\nStadt = Anwerbung',
-      { fontSize: '11px', color: '#604030', lineSpacing: 3 });
+    // Minimap label
+    this.add.text(sx + SIDEBAR_WIDTH / 2, 460, '── KARTE ──', {
+      fontSize: '13px', fontFamily: 'Georgia, serif', color: '#c8a040',
+    }).setOrigin(0.5);
 
-    const btnY = GAME_HEIGHT - 70;
+    // Mini-map is drawn by renderMinimap() at y=468
+
+    this.add.text(sx + 14, GAME_HEIGHT - 90,
+      'Klick = Bewegen  •  Rotes △ = Kampf\nGold = Ressource  •  Lila = Artefakt',
+      { fontSize: '10px', color: '#604030', lineSpacing: 3 });
+
+    const btnY = GAME_HEIGHT - 50;
     const btnG = this.add.graphics();
     btnG.fillStyle(0x2a1a08, 1); btnG.lineStyle(2, 0xc8a040, 1);
-    btnG.fillRoundedRect(sx + 16, btnY, SIDEBAR_WIDTH - 32, 50, 6);
-    btnG.strokeRoundedRect(sx + 16, btnY, SIDEBAR_WIDTH - 32, 50, 6);
-    const btnTxt = this.add.text(sx + SIDEBAR_WIDTH / 2, btnY + 25, 'ZUG BEENDEN', {
-      fontSize: '16px', fontFamily: 'Georgia, serif', color: '#ffd060',
+    btnG.fillRoundedRect(sx + 16, btnY, SIDEBAR_WIDTH - 32, 38, 6);
+    btnG.strokeRoundedRect(sx + 16, btnY, SIDEBAR_WIDTH - 32, 38, 6);
+    const btnTxt = this.add.text(sx + SIDEBAR_WIDTH / 2, btnY + 19, 'ZUG BEENDEN', {
+      fontSize: '14px', fontFamily: 'Georgia, serif', color: '#ffd060',
     }).setOrigin(0.5);
-    const z = this.add.zone(sx + SIDEBAR_WIDTH / 2, btnY + 25, SIDEBAR_WIDTH - 32, 50).setInteractive({ cursor: 'pointer' });
+    const z = this.add.zone(sx + SIDEBAR_WIDTH / 2, btnY + 19, SIDEBAR_WIDTH - 32, 38).setInteractive({ cursor: 'pointer' });
     z.on('pointerdown', () => this.endTurn());
     z.on('pointerover', () => btnTxt.setColor('#ffffff'));
     z.on('pointerout',  () => btnTxt.setColor('#ffd060'));
@@ -244,14 +345,22 @@ export class AdventureMap extends Phaser.Scene {
       onComplete: () => this.onHeroArrived(col, row),
     });
 
+    // Update fog, sprites, minimap
+    updateFog(col, row);
+    this.renderFog();
+    this.updateSpriteVisibility();
+    this.renderMinimap();
+
     this.computeReachable();
     this.renderHighlights();
     this.moveText.setText(`Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`);
+
+    saveGame();
   }
 
   private onHeroArrived(col: number, row: number): void {
     const res = RESOURCES.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
-    if (res) this.collectResource(res);
+    if (res) this.collectResourceItem(res);
 
     const city = CITIES.find(c => c.tileX === col && c.tileY === row);
     if (city) { this.openCity(city.id); return; }
@@ -266,7 +375,7 @@ export class AdventureMap extends Phaser.Scene {
     if (enc) this.startCombat(enc);
   }
 
-  private collectResource(res: ResourceOnMap): void {
+  private collectResourceItem(res: ResourceOnMap): void {
     collectResource(res.id);
     this.resourceSprites.get(res.id)?.destroy();
     this.resourceSprites.delete(res.id);
@@ -296,12 +405,14 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private openCity(cityId: string): void {
+    music.stop();
     this.scene.pause('AdventureMap');
     this.scene.launch('CityScene', { cityId });
     this.scene.get('CityScene').events.once('shutdown', () => {
       this.refreshArmyPanel(MAP_W);
       this.goldText.setText(`⚙ Gold: ${state.gold}`);
       this.scene.resume('AdventureMap');
+      music.play('map');
     });
   }
 
@@ -310,7 +421,9 @@ export class AdventureMap extends Phaser.Scene {
     this.scene.launch('DialogScene', { event: ev });
     this.scene.get('DialogScene').events.once('shutdown', () => {
       if (ev.onComplete === 'victory') {
-        this.scene.stop('AdventureMap'); this.scene.start('VictoryScene');
+        music.stop();
+        this.scene.stop('AdventureMap');
+        this.scene.start('VictoryScene');
       } else {
         this.scene.resume('AdventureMap');
       }
@@ -318,6 +431,7 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private startCombat(encounter: EnemyEncounter): void {
+    music.stop();
     this.scene.pause('AdventureMap');
     this.scene.launch('CombatScene', { encounter });
     this.scene.get('CombatScene').events.once('combat_end', (result: 'win' | 'lose') => {
@@ -328,7 +442,9 @@ export class AdventureMap extends Phaser.Scene {
         this.refreshArmyPanel(MAP_W);
         this.heroLvlText.setText(`Stufe ${state.hero.level}  ATK ${state.hero.attack}  DEF ${state.hero.defense}  WIS ${state.hero.knowledge}`);
         this.scene.resume('AdventureMap');
+        music.play('map');
       } else {
+        music.stop();
         this.scene.stop('CombatScene');
         this.scene.stop('AdventureMap');
         this.scene.start('GameOverScene');
@@ -336,7 +452,7 @@ export class AdventureMap extends Phaser.Scene {
     });
   }
 
-  // ── Hex movement system ────────────────────────────────────────────────────
+  // ── Hex movement ───────────────────────────────────────────────────────────
 
   private computeReachable(): void {
     this.reachableTiles.clear();
@@ -361,6 +477,8 @@ export class AdventureMap extends Phaser.Scene {
     this.highlightLayer.removeAll(true);
     this.reachableTiles.forEach(key => {
       const [col, row] = key.split(',').map(Number);
+      // Only show highlights in visible area
+      if (state.fogMap[row]?.[col] !== 2) return;
       const { x, y } = hexCenter(col, row);
       const g = this.add.graphics();
       g.fillStyle(0x88ccff, 0.22);
@@ -377,6 +495,7 @@ export class AdventureMap extends Phaser.Scene {
     this.computeReachable();
     this.renderHighlights();
     this.moveText.setText(`Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`);
+    saveGame();
   }
 
   private triggerStartEvent(): void {

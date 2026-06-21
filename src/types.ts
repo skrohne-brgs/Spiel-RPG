@@ -93,4 +93,5 @@ export interface GameState {
   triggeredEvents: string[];
   collectedResources: string[];
   spellCastThisCombat: boolean;
+  fogMap: number[][];  // 0=unentdeckt  1=gesehen  2=sichtbar
 }

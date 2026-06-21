@@ -26,7 +26,7 @@ export class Boot extends Phaser.Scene {
     this.generateHeroTexture();
     this.generateEnemyMarkerTexture();
     this.generateResourceTextures();
-    this.scene.start('HeroSelectScene');
+    this.scene.start('MainMenu');
   }
 
   // ── Seeded pseudo-random ───────────────────────────────────────────────────

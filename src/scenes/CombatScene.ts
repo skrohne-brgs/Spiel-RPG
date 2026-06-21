@@ -8,6 +8,7 @@ import { SPELL_DEFS } from '../data/spells';
 import type { SpellDef, SpellTarget } from '../data/spells';
 import { state, defeatEnemy, gainExperience } from '../GameState';
 import type { EnemyEncounter, CombatStack } from '../types';
+import { music } from '../audio/ChiptuneEngine';
 
 type Phase = 'select_unit' | 'unit_moved' | 'spell_select' | 'spell_target';
 
@@ -51,6 +52,7 @@ export class CombatScene extends Phaser.Scene {
   }
 
   create(): void {
+    music.play('combat');
     this.cameras.main.setBackgroundColor('#100808');
     this.drawBg();
     this.drawGrid();
@@ -734,6 +736,7 @@ export class CombatScene extends Phaser.Scene {
           const killed = Math.min(target.count, Math.floor(dmg / target.maxHp));
           target.count -= killed;
           if (target.count > 0) target.currentHp = Math.max(1, target.currentHp - dmg % target.maxHp);
+          this.spellEffect(target.gridX, target.gridY, 0xffff00);
           this.flashHit(target);
           this.addLog(`⚡ Blitzstrahl trifft ${target.name} für ${dmg} Schaden! ${killed} fallen.`);
           this.renderUnit(target);
@@ -743,6 +746,7 @@ export class CombatScene extends Phaser.Scene {
         if (target) {
           const heal = 30 * power;
           target.currentHp = Math.min(target.maxHp, target.currentHp + heal);
+          this.spellEffect(target.gridX, target.gridY, 0x44ff88);
           this.addLog(`✚ Heilung: ${target.name} erhält ${heal} TP zurück.`);
           this.renderUnit(target);
         }
@@ -750,6 +754,7 @@ export class CombatScene extends Phaser.Scene {
       case 'bless':
         if (target) {
           target.blessed = true;
+          this.spellEffect(target.gridX, target.gridY, 0xffff88);
           this.addLog(`✦ Segen: ${target.name} kämpft mit 50% mehr Schaden!`);
           this.renderUnit(target);
         }
@@ -759,6 +764,7 @@ export class CombatScene extends Phaser.Scene {
           target.slowed = true;
           target.slowedTurns = 3;
           target.speed = Math.max(1, Math.floor(target.speed / 2));
+          this.spellEffect(target.gridX, target.gridY, 0x8888ff);
           this.addLog(`🐢 Verlangsamung: ${target.name} halbiert sein Tempo für 3 Runden.`);
         }
         break;
@@ -767,6 +773,7 @@ export class CombatScene extends Phaser.Scene {
         this.units.filter(u => u.faction === 'enemy' && u.count > 0).forEach(u => {
           const killed = Math.min(u.count, Math.floor(dmg / u.maxHp));
           u.count -= killed;
+          this.spellEffect(u.gridX, u.gridY, 0xff4400);
           this.flashHit(u);
           this.renderUnit(u);
         });
@@ -774,7 +781,10 @@ export class CombatScene extends Phaser.Scene {
         break;
       }
       case 'mass_haste':
-        this.units.filter(u => u.faction === 'player').forEach(u => { u.speed += 4; });
+        this.units.filter(u => u.faction === 'player').forEach(u => {
+          u.speed += 4;
+          this.spellEffect(u.gridX, u.gridY, 0x00ffcc);
+        });
         this.addLog(`💨 Masseneile: Alle Einheiten erhalten +4 Geschwindigkeit!`);
         break;
     }
@@ -791,7 +801,28 @@ export class CombatScene extends Phaser.Scene {
   private flashHit(u: CombatStack): void {
     const c = this.containers.get(u.cid);
     if (!c) return;
+    const ox = c.x;
     this.tweens.add({ targets: c, alpha: 0.15, duration: 80, yoyo: true, repeat: 2 });
+    this.tweens.add({
+      targets: c, x: ox + 7,
+      duration: 35, yoyo: true, repeat: 5, ease: 'Sine.easeInOut',
+      onComplete: () => { c.x = ox; },
+    });
+  }
+
+  private spellEffect(gx: number, gy: number, color: number): void {
+    const { x, y } = this.cell(gx, gy);
+    const g = this.add.graphics().setDepth(25);
+    [0, 1, 2].forEach(i => {
+      this.time.delayedCall(i * 70, () => {
+        g.clear();
+        g.fillStyle(color, 0.65 - i * 0.18);
+        g.fillCircle(x, y, 18 + i * 14);
+        g.lineStyle(2, color, 0.9 - i * 0.25);
+        g.strokeCircle(x, y, 18 + i * 14);
+      });
+    });
+    this.time.delayedCall(280, () => g.destroy());
   }
 
   private addLog(msg: string): void {
@@ -809,6 +840,7 @@ export class CombatScene extends Phaser.Scene {
   private endCombat(result: 'win' | 'lose'): void {
     if (!this.combatActive) return;
     this.combatActive = false;
+    music.stop();
     this.hlGraphics.clear();
     this.closeSpellMenu();
 
