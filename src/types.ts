@@ -75,6 +75,7 @@ export interface HeroData {
   leadership: number;
   level: number;
   experience: number;
+  skillPoints: number;
   mana: number;
   maxMana: number;
   spellPower: number;

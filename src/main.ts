@@ -9,6 +9,7 @@ import { CombatScene } from './scenes/CombatScene';
 import { DialogScene } from './scenes/DialogScene';
 import { CityScene } from './scenes/CityScene';
 import { LevelUpScene } from './scenes/LevelUpScene';
+import { SkillTreeScene } from './scenes/SkillTreeScene';
 import { VictoryScene } from './scenes/VictoryScene';
 import { GameOverScene } from './scenes/GameOverScene';
 import { CampaignScene } from './scenes/CampaignScene';
@@ -22,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
   scene: [
     Boot, MainMenu, HeroSelectScene,
     CampaignScene, AdventureMap, CombatScene, DialogScene,
-    CityScene, LevelUpScene, HeroScreen,
+    CityScene, LevelUpScene, SkillTreeScene, HeroScreen,
     VictoryScene, GameOverScene,
   ],
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },

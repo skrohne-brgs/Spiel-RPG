@@ -57,7 +57,7 @@ export class HeroScreen extends Phaser.Scene {
     hy += 22;
 
     // EXP bar
-    const needed = h.level * 1000;
+    const needed = Math.round(800 * Math.pow(1.5, h.level - 1));
     const expFrac = Math.min(h.experience / needed, 1);
     const bw = 300;
     const bg = this.add.graphics();
@@ -98,6 +98,13 @@ export class HeroScreen extends Phaser.Scene {
     // ── col 2: Fähigkeiten ────────────────────────────────────────────────────
     this.sectionHeader(C2X, bodyTop, COL_W, 'FÄHIGKEITEN');
     let sy = bodyTop + 28;
+    // Skill points indicator
+    if (h.skillPoints > 0) {
+      this.add.text(C2X + 8, sy, `Verfügbare Punkte: ${h.skillPoints}`, {
+        fontSize: '11px', color: '#60ff80',
+      });
+      sy += 20;
+    }
     const skillEntries = Object.entries(h.skills);
     if (skillEntries.length === 0) {
       this.add.text(C2X + 8, sy, 'Noch keine Fähigkeiten erlernt.', {
@@ -198,6 +205,17 @@ export class HeroScreen extends Phaser.Scene {
       });
     }
 
+    // ── Skilltree button ──────────────────────────────────────────────────────
+    const stBtnColor = h.skillPoints > 0 ? '#60c080' : '#504038';
+    const stBtn = this.add.text(GAME_WIDTH / 2, PY + PH - 30,
+      `[S] Skilltree öffnen  •  Punkte: ${h.skillPoints}`, {
+      fontSize: '12px', color: stBtnColor,
+    }).setOrigin(0.5).setInteractive({ cursor: 'pointer' });
+    stBtn.on('pointerover', () => stBtn.setColor('#80ffb0'));
+    stBtn.on('pointerout',  () => stBtn.setColor(stBtnColor));
+    stBtn.on('pointerdown', () => this.openSkillTree());
+    this.input.keyboard?.once('keydown-S', () => this.openSkillTree());
+
     // press H hint
     this.add.text(GAME_WIDTH / 2, PY + PH - 10, '[H] oder [ESC] schließen', {
       fontSize: '10px', color: '#3a2810',
@@ -213,6 +231,11 @@ export class HeroScreen extends Phaser.Scene {
     this.add.text(x + w / 2, y + 11, label, {
       fontSize: '11px', fontFamily: 'Georgia, serif', color: '#806040',
     }).setOrigin(0.5);
+  }
+
+  private openSkillTree(): void {
+    this.scene.stop('HeroScreen');
+    this.events.emit('open_skilltree');
   }
 
   private close(): void {

@@ -419,8 +419,16 @@ export class AdventureMap extends Phaser.Scene {
     if (!this.scene.isActive()) return;  // Fix 1: don't open while paused (e.g. during combat)
     this.scene.pause('AdventureMap');
     this.scene.launch('HeroScreen');
-    this.scene.get('HeroScreen').events.once('heroscreen_close', () => {
+    const heroScene = this.scene.get('HeroScreen');
+    heroScene.events.once('heroscreen_close', () => {
       this.scene.resume('AdventureMap');
+    });
+    heroScene.events.once('open_skilltree', () => {
+      // HeroScreen already stopped itself; launch SkillTreeScene
+      this.scene.launch('SkillTreeScene', { resumeScene: 'AdventureMap' });
+      this.scene.get('SkillTreeScene').events.once('skilltree_close', () => {
+        this.scene.resume('AdventureMap');
+      });
     });
   }
 

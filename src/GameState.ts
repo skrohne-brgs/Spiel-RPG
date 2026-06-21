@@ -13,7 +13,7 @@ function makeStack(unitId: string, count: number): UnitStack {
 function makeHero(heroId: string): HeroData {
   const def = HERO_DEFS.find(h => h.id === heroId);
   if (!def) throw new Error(`Unknown hero: ${heroId}`);
-  return { ...def, artifacts: [], skills: { ...def.skills } };
+  return { ...def, artifacts: [], skills: { ...def.skills }, skillPoints: 0 };
 }
 
 function emptyFog(): number[][] {
@@ -88,6 +88,7 @@ export function loadGame(): boolean {
     if (saved.missionVictoryPhase === undefined) saved.missionVictoryPhase = 0;
     if (!saved.collectedLore) saved.collectedLore = [];
     if (!saved.completedSideObjectives) saved.completedSideObjectives = [];
+    if (!saved.hero.skillPoints) saved.hero.skillPoints = 0;
     state = saved;
     return true;
   } catch { return false; }
@@ -113,18 +114,25 @@ export function isSideObjectiveCompleted(id: string): boolean { return state.com
 
 export function gainExperience(amount: number): void {
   state.hero.experience += amount;
-  const needed = state.hero.level * 1000;
-  if (state.hero.experience >= needed) { state.hero.level++; state.hero.experience -= needed; }
+  const needed = Math.round(800 * Math.pow(1.5, state.hero.level - 1));
+  if (state.hero.experience >= needed) {
+    state.hero.level++;
+    state.hero.experience -= needed;
+    state.hero.skillPoints++;
+  }
 }
 
 export function applySkill(skillId: string): void {
   const h = state.hero;
   h.skills[skillId] = (h.skills[skillId] ?? 0) + 1;
   switch (skillId) {
-    case 'sorcery':    h.maxMana += 10; h.mana = Math.min(h.mana + 10, h.maxMana); h.spellPower++; break;
-    case 'leadership': state.playerArmy.forEach(u => { u.attack++; u.defense++; }); break;
-    case 'resistance': state.playerArmy.forEach(u => { u.defense++; }); break;
-    case 'offense':    state.playerArmy.forEach(u => { u.attack++; }); break;
+    case 'sorcery':           h.maxMana += 10; h.mana = Math.min(h.mana + 10, h.maxMana); h.spellPower++; break;
+    case 'leadership':        state.playerArmy.forEach(u => { u.attack++; u.defense++; }); break;
+    case 'resistance':        state.playerArmy.forEach(u => { u.defense++; }); break;
+    case 'offense':           state.playerArmy.forEach(u => { u.attack++; }); break;
+    case 'einigende_stimme':  state.playerArmy.forEach(u => { u.attack += 2; u.defense += 2; }); break;
+    case 'kriegswut':         h.attack += 4; state.playerArmy.forEach(u => { u.attack += 2; }); break;
+    case 'eisenschild':       state.playerArmy.forEach(u => { u.defense += 3; u.maxHp += 5; u.currentHp = Math.min(u.currentHp + 5, u.maxHp); }); break;
     default: break;
   }
 }

@@ -9,12 +9,12 @@ export const UNIT_DEFS: Record<string, UnitDef> = {
   },
   numenorean_archer: {
     id: 'numenorean_archer', name: 'Númenórischer Bogenschütze',
-    faction: 'player', maxHp: 10, attack: 6, defense: 2, speed: 5, range: 6, moveRange: 3,
+    faction: 'player', maxHp: 10, attack: 4, defense: 2, speed: 5, range: 5, moveRange: 3,
     color: 0x3aa060, symbol: 'B',
   },
   dunedain_ranger: {
     id: 'dunedain_ranger', name: 'Dúnedain-Waldläufer',
-    faction: 'player', maxHp: 12, attack: 8, defense: 3, speed: 7, range: 4, moveRange: 5,
+    faction: 'player', maxHp: 12, attack: 6, defense: 3, speed: 7, range: 4, moveRange: 5,
     color: 0x5a8040, symbol: 'R',
   },
   elven_warrior: {

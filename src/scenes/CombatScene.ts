@@ -600,11 +600,13 @@ export class CombatScene extends Phaser.Scene {
   private executeAttack(attacker: CombatStack, target: CombatStack): void {
     const atkBonus = attacker.blessed ? 1.5 : 1.0;
     const archBonus = attacker.range > 1 && attacker.faction === 'player'
-      ? 1 + (state.hero.skills['archery'] ?? 0) * 0.2
+      ? 1 + (state.hero.skills['archery'] ?? 0) * 0.15
       : 1.0;
     const heroAtk = attacker.faction === 'player' ? state.hero.attack : 0;
+    // Halve hero ATK contribution for ranged units so melee stays relevant
+    const heroAtkEff = attacker.range > 1 ? Math.floor(heroAtk / 2) : heroAtk;
 
-    const rawDmg = Math.max(1, (attacker.attack + heroAtk) * attacker.count * atkBonus * archBonus - target.defense);
+    const rawDmg = Math.max(1, (attacker.attack + heroAtkEff) * attacker.count * atkBonus * archBonus - target.defense);
     const dmg = Math.round(Phaser.Math.Between(Math.floor(rawDmg * 0.85), Math.ceil(rawDmg * 1.15)));
     const killed = Math.min(target.count, Math.floor(dmg / target.maxHp));
     const hpRem = dmg - killed * target.maxHp;
@@ -901,15 +903,19 @@ export class CombatScene extends Phaser.Scene {
       { fontSize: '22px', fontFamily: 'Georgia, serif', color: '#e0d0a8' },
     ).setOrigin(0.5).setDepth(31);
 
-    // Check level up
-    const needsLevelUp = result === 'win' && state.hero.experience >= state.hero.level * 1000;
+    // Check level up (exponential threshold: 800 * 1.5^(level-1))
+    const xpThreshold = Math.round(800 * Math.pow(1.5, state.hero.level - 1));
+    const needsLevelUp = result === 'win' && state.hero.experience >= xpThreshold;
 
     this.time.delayedCall(1800, () => {
       this.scene.stop('CombatScene');
       if (needsLevelUp && result === 'win') {
         this.scene.resume('AdventureMap');
         this.scene.pause('AdventureMap');
-        this.scene.launch('LevelUpScene', { resumeScene: 'AdventureMap' });
+        this.scene.launch('SkillTreeScene', { resumeScene: 'AdventureMap' });
+        this.scene.get('SkillTreeScene').events.once('skilltree_close', () => {
+          this.scene.resume('AdventureMap');
+        });
       } else {
         this.events.emit('combat_end', result);
       }
