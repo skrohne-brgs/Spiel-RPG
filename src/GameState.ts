@@ -37,6 +37,8 @@ export function buildInitialState(heroId: string): GameState {
     fogMap: emptyFog(),
     currentMissionIdx: 0,
     completedMissions: [],
+    missionVictoryPhase: 0,
+    collectedLore: [],
   };
 }
 
@@ -82,6 +84,8 @@ export function loadGame(): boolean {
     if (!saved.fogMap) saved.fogMap = emptyFog();
     if (saved.currentMissionIdx === undefined) saved.currentMissionIdx = 0;
     if (!saved.completedMissions) saved.completedMissions = [];
+    if (saved.missionVictoryPhase === undefined) saved.missionVictoryPhase = 0;
+    if (!saved.collectedLore) saved.collectedLore = [];
     state = saved;
     return true;
   } catch { return false; }
@@ -99,6 +103,9 @@ export function defeatEnemy(id: string): void          { if (!state.defeatedEnem
 export function isEnemyDefeated(id: string): boolean   { return state.defeatedEnemies.includes(id); }
 export function collectResource(id: string): void      { if (!state.collectedResources.includes(id)) state.collectedResources.push(id); }
 export function isResourceCollected(id: string): boolean { return state.collectedResources.includes(id); }
+export function collectLore(id: string): void      { if (!state.collectedLore.includes(id)) state.collectedLore.push(id); }
+export function isLoreCollected(id: string): boolean { return state.collectedLore.includes(id); }
+export function setVictoryPhase(phase: number): void { state.missionVictoryPhase = phase; }
 
 export function gainExperience(amount: number): void {
   state.hero.experience += amount;
@@ -155,4 +162,6 @@ export function advanceMission(): void {
   state.collectedResources = [];
   state.spellCastThisCombat = false;
   state.fogMap = emptyFog();
+  state.missionVictoryPhase = 0;
+  state.collectedLore = [];
 }

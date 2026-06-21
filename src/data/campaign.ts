@@ -23,6 +23,11 @@ export const CAMPAIGN: MissionData[] = [
     startTile: { x: 5, y: 2 },
     victoryEventId: 'mordor_border',
     introEventId: 'intro',
+    victoryCondition: { type: 'reach' },
+    loreItems: [
+      { id: 'lore_eriador_edain', title: 'Stein der Edain',  text: '', tileX: 3, tileY: 6  },
+      { id: 'lore_eriador_road',  title: 'Alter Wegstein',   text: '', tileX: 7, tileY: 10 },
+    ],
   },
 
   // ── Mission 1: Gondors Gründung ──────────────────────────────────────────────
@@ -30,7 +35,7 @@ export const CAMPAIGN: MissionData[] = [
     id: 'gondor',
     title: "Gondors Gründung",
     subtitle: 'Die weiße Stadt des Südens',
-    description: 'Errichte Gondor. Marschiere von Pelargir nach Norden, durchquere Osgiliath und erreiche Minas Anor.',
+    description: 'Finde die Frucht des Weißen Baumes – das heilige Symbol Gondors – und sicher so das Erbe Númenors.',
     mapTiles: [
       [1,1,1,0,0,0,0,0,0,2,2,2,0,0,0,1,1,7,1,1],
       [1,1,0,0,0,5,0,0,2,2,2,0,0,0,0,1,1,5,1,1],
@@ -82,16 +87,16 @@ export const CAMPAIGN: MissionData[] = [
     ],
     resources: [
       { id: 'g1_gold_1', type: 'gold', tileX: 3, tileY: 12, collected: false, goldValue: 200 },
-      { id: 'g1_gold_2', type: 'gold', tileX: 6, tileY: 9, collected: false, goldValue: 250 },
+      { id: 'g1_gold_2', type: 'gold', tileX: 6, tileY: 9,  collected: false, goldValue: 250 },
       { id: 'g1_gold_3', type: 'gold', tileX: 11, tileY: 6, collected: false, goldValue: 300 },
       { id: 'g1_gold_4', type: 'gold', tileX: 14, tileY: 4, collected: false, goldValue: 175 },
-      { id: 'g1_art_1', type: 'artifact', tileX: 7, tileY: 10, collected: false, artifactId: 'narsil_shard' },
-      { id: 'g1_art_2', type: 'artifact', tileX: 13, tileY: 7, collected: false, artifactId: 'elendilmir' },
+      { id: 'g1_art_1', type: 'artifact', tileX: 7,  tileY: 10, collected: false, artifactId: 'narsil_shard'     },
+      { id: 'g1_art_2', type: 'artifact', tileX: 13, tileY: 7,  collected: false, artifactId: 'elendilmir'       },
+      { id: 'g1_victory', type: 'artifact', tileX: 13, tileY: 2, collected: false, artifactId: 'white_tree_fruit' },
     ],
     storyTriggers: {
       '5,13': 'gondor_intro',
       '9,7':  'ancient_road',
-      '17,2': 'gondor_complete',
     },
     cities: [
       {
@@ -120,10 +125,15 @@ export const CAMPAIGN: MissionData[] = [
         ],
       },
     ],
-    victoryTile: { x: 17, y: 2 },
+    victoryTile: { x: 13, y: 2 },
     startTile: { x: 5, y: 13 },
     victoryEventId: 'gondor_complete',
     introEventId: 'gondor_intro',
+    victoryCondition: { type: 'artifact', artifactId: 'white_tree_fruit' },
+    loreItems: [
+      { id: 'lore_gondor_anduin', title: 'Marmorinschrift', text: '', tileX: 3,  tileY: 9 },
+      { id: 'lore_gondor_camp',   title: 'Gondors Erstes Lager', text: '', tileX: 11, tileY: 4 },
+    ],
   },
 
   // ── Mission 2: Der Bergpass / Moria ──────────────────────────────────────────
@@ -131,7 +141,7 @@ export const CAMPAIGN: MissionData[] = [
     id: 'moria',
     title: 'Der Bergpass',
     subtitle: 'Durch die Tiefen Morias',
-    description: 'Führe dein Heer durch die gefährlichen Bergpässe und verlassenen Minen von Moria.',
+    description: 'Besiege den Ausgangs-Wächter und führe dein Heer durch die gefährlichen Bergpässe Morias ans Tageslicht.',
     mapTiles: [
       [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
       [1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1],
@@ -177,10 +187,10 @@ export const CAMPAIGN: MissionData[] = [
       },
     ],
     resources: [
-      { id: 'g2_gold_1', type: 'gold', tileX: 5, tileY: 6, collected: false, goldValue: 300 },
-      { id: 'g2_gold_2', type: 'gold', tileX: 9, tileY: 8, collected: false, goldValue: 250 },
+      { id: 'g2_gold_1', type: 'gold', tileX: 5,  tileY: 6, collected: false, goldValue: 300 },
+      { id: 'g2_gold_2', type: 'gold', tileX: 9,  tileY: 8, collected: false, goldValue: 250 },
       { id: 'g2_gold_3', type: 'gold', tileX: 12, tileY: 6, collected: false, goldValue: 200 },
-      { id: 'g2_art_1', type: 'artifact', tileX: 8, tileY: 7, collected: false, artifactId: 'ring_barahir' },
+      { id: 'g2_art_1', type: 'artifact', tileX: 8,  tileY: 7, collected: false, artifactId: 'ring_barahir'  },
       { id: 'g2_art_2', type: 'artifact', tileX: 10, tileY: 7, collected: false, artifactId: 'mithril_armor' },
     ],
     storyTriggers: {
@@ -193,9 +203,9 @@ export const CAMPAIGN: MissionData[] = [
         id: 'caradhras_camp', name: 'Caradhras-Lager', description: 'Vorgeschobenes Lager am Eingang der Bergpässe.',
         tileX: 1, tileY: 7,
         recruitOptions: [
-          { unitId: 'numenorean_warrior', cost: 50, available: 18 },
-          { unitId: 'dunedain_ranger',    cost: 90, available: 10 },
-          { unitId: 'elven_warrior',      cost: 120, available: 6 },
+          { unitId: 'numenorean_warrior', cost: 50,  available: 18 },
+          { unitId: 'dunedain_ranger',    cost: 90,  available: 10 },
+          { unitId: 'elven_warrior',      cost: 120, available: 6  },
         ],
       },
     ],
@@ -203,6 +213,12 @@ export const CAMPAIGN: MissionData[] = [
     startTile: { x: 1, y: 7 },
     victoryEventId: 'moria_complete',
     introEventId: 'moria_intro',
+    victoryCondition: { type: 'boss_then_reach', enemyId: 'moria_exit' },
+    phaseOneEventId: 'moria_boss_defeated',
+    loreItems: [
+      { id: 'lore_moria_khazad', title: 'Zwerg-Inschrift',       text: '', tileX: 5, tileY: 5 },
+      { id: 'lore_moria_scroll', title: 'Verlorenes Tagebuch',   text: '', tileX: 9, tileY: 8 },
+    ],
   },
 
   // ── Mission 3: Die Ostlande / Rhûn ───────────────────────────────────────────
@@ -210,7 +226,7 @@ export const CAMPAIGN: MissionData[] = [
     id: 'rhun',
     title: 'Die Ostlande',
     subtitle: 'Die Zitadelle von Rhûn',
-    description: 'Dränge Saurons Verbündete zurück und vernichte die Zitadelle der Easterlings.',
+    description: 'Finde das Zepter des Rhûn-Königs und marschiere dann zur Zitadelle, um Saurons Griff auf die Ostlande zu brechen.',
     mapTiles: [
       [2,0,0,0,0,0,0,0,0,0,0,0,0,0,6,6,6,7,6,3],
       [2,2,0,0,0,0,0,0,0,0,0,0,0,6,6,6,6,5,6,3],
@@ -256,11 +272,12 @@ export const CAMPAIGN: MissionData[] = [
       },
     ],
     resources: [
-      { id: 'g3_gold_1', type: 'gold', tileX: 4, tileY: 6, collected: false, goldValue: 250 },
-      { id: 'g3_gold_2', type: 'gold', tileX: 9, tileY: 10, collected: false, goldValue: 300 },
-      { id: 'g3_gold_3', type: 'gold', tileX: 14, tileY: 5, collected: false, goldValue: 350 },
-      { id: 'g3_art_1', type: 'artifact', tileX: 6, tileY: 12, collected: false, artifactId: 'narsil_shard' },
-      { id: 'g3_art_2', type: 'artifact', tileX: 15, tileY: 3, collected: false, artifactId: 'elendilmir' },
+      { id: 'g3_gold_1', type: 'gold', tileX: 4,  tileY: 6,  collected: false, goldValue: 250 },
+      { id: 'g3_gold_2', type: 'gold', tileX: 9,  tileY: 10, collected: false, goldValue: 300 },
+      { id: 'g3_gold_3', type: 'gold', tileX: 14, tileY: 5,  collected: false, goldValue: 350 },
+      { id: 'g3_art_1', type: 'artifact', tileX: 6,  tileY: 12, collected: false, artifactId: 'narsil_shard' },
+      { id: 'g3_art_2', type: 'artifact', tileX: 15, tileY: 3,  collected: false, artifactId: 'elendilmir'   },
+      { id: 'g3_victory', type: 'artifact', tileX: 16, tileY: 0, collected: false, artifactId: 'rhun_scepter'  },
     ],
     storyTriggers: {
       '0,7':  'rhun_intro',
@@ -289,6 +306,12 @@ export const CAMPAIGN: MissionData[] = [
     startTile: { x: 0, y: 7 },
     victoryEventId: 'rhun_complete',
     introEventId: 'rhun_intro',
+    victoryCondition: { type: 'artifact_then_reach', artifactId: 'rhun_scepter' },
+    phaseOneEventId: 'rhun_artifact_found',
+    loreItems: [
+      { id: 'lore_rhun_steppe',    title: 'Fremdartige Inschrift', text: '', tileX: 2,  tileY: 4 },
+      { id: 'lore_rhun_wasteland', title: 'Zerbrochene Figur',     text: '', tileX: 10, tileY: 8 },
+    ],
   },
 
   // ── Mission 4: Die Letzte Allianz / Barad-dûr ────────────────────────────────
@@ -296,7 +319,7 @@ export const CAMPAIGN: MissionData[] = [
     id: 'mordor',
     title: 'Die Letzte Allianz',
     subtitle: 'Barad-dûr muss fallen',
-    description: 'Stürme Barad-dûr und beende Saurons Herrschaft für immer.',
+    description: 'Besiege Saurons mächtigen Leutnant und stürme dann Barad-dûr, um Saurons Herrschaft für immer zu beenden.',
     mapTiles: [
       [1,1,1,1,6,6,6,6,6,6,6,6,6,6,6,6,6,1,1,1],
       [1,1,1,6,6,6,6,6,6,6,6,6,6,6,6,6,1,1,1,1],
@@ -342,11 +365,11 @@ export const CAMPAIGN: MissionData[] = [
       },
     ],
     resources: [
-      { id: 'g4_gold_1', type: 'gold', tileX: 4, tileY: 10, collected: false, goldValue: 400 },
-      { id: 'g4_gold_2', type: 'gold', tileX: 8, tileY: 8, collected: false, goldValue: 350 },
-      { id: 'g4_gold_3', type: 'gold', tileX: 11, tileY: 6, collected: false, goldValue: 500 },
-      { id: 'g4_art_1', type: 'artifact', tileX: 6, tileY: 11, collected: false, artifactId: 'ring_barahir' },
-      { id: 'g4_art_2', type: 'artifact', tileX: 13, tileY: 5, collected: false, artifactId: 'mithril_armor' },
+      { id: 'g4_gold_1', type: 'gold', tileX: 4,  tileY: 10, collected: false, goldValue: 400 },
+      { id: 'g4_gold_2', type: 'gold', tileX: 8,  tileY: 8,  collected: false, goldValue: 350 },
+      { id: 'g4_gold_3', type: 'gold', tileX: 11, tileY: 6,  collected: false, goldValue: 500 },
+      { id: 'g4_art_1', type: 'artifact', tileX: 6,  tileY: 11, collected: false, artifactId: 'ring_barahir'  },
+      { id: 'g4_art_2', type: 'artifact', tileX: 13, tileY: 5,  collected: false, artifactId: 'mithril_armor' },
     ],
     storyTriggers: {
       '1,11': 'mordor_siege_intro',
@@ -369,5 +392,11 @@ export const CAMPAIGN: MissionData[] = [
     startTile: { x: 1, y: 11 },
     victoryEventId: 'baradur_victory',
     introEventId: 'mordor_siege_intro',
+    victoryCondition: { type: 'boss_then_reach', enemyId: 'mordor_lieutenant' },
+    phaseOneEventId: 'mordor_boss_defeated',
+    loreItems: [
+      { id: 'lore_mordor_edict',    title: 'Schwarzes Edikt',    text: '', tileX: 6,  tileY: 10 },
+      { id: 'lore_mordor_elbereth', title: 'Elfische Inschrift', text: '', tileX: 11, tileY: 7  },
+    ],
   },
 ];

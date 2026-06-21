@@ -9,7 +9,8 @@ import { ARTIFACTS } from '../data/artifacts';
 import {
   state, isEnemyDefeated, isEventTriggered, triggerEvent,
   isResourceCollected, collectResource, applyArtifact, movementPoints,
-  updateFog, saveGame, advanceMission,
+  updateFog, saveGame, advanceMission, setVictoryPhase,
+  collectLore, isLoreCollected,
 } from '../GameState';
 import { music } from '../audio/ChiptuneEngine';
 import type { EnemyEncounter, ResourceOnMap, MissionData } from '../types';
@@ -64,8 +65,10 @@ const MM_COL: Record<number, number> = {
 export class AdventureMap extends Phaser.Scene {
   private mission!: MissionData;
   private heroSprite!: Phaser.GameObjects.Image;
-  private enemySprites   = new Map<string, Phaser.GameObjects.Image>();
+  private enemySprites    = new Map<string, Phaser.GameObjects.Image>();
   private resourceSprites = new Map<string, Phaser.GameObjects.Image>();
+  private loreSprites     = new Map<string, Phaser.GameObjects.Text>();
+  private objectiveBannerText!: Phaser.GameObjects.Text;
   private highlightLayer!: Phaser.GameObjects.Container;
   private fogLayer!:       Phaser.GameObjects.Graphics;
   private minimapGfx!:    Phaser.GameObjects.Graphics;
@@ -90,6 +93,7 @@ export class AdventureMap extends Phaser.Scene {
     this.renderResources();
     this.createEnemyMarkers();
     this.renderVictoryMarker();
+    this.renderLoreItems();
     this.createHero();
     this.createFogLayer();
     this.createSidebar();
@@ -153,14 +157,41 @@ export class AdventureMap extends Phaser.Scene {
 
   // ── Mission objective ────────────────────────────────────────────────────────
 
-  private goalLabel(): string {
-    const vt = this.mission.victoryTile;
-    const city = this.mission.cities.find(c => c.tileX === vt.x && c.tileY === vt.y);
-    return city ? city.name : 'das markierte Ziel';
+  private cityNameAt(tx: number, ty: number): string {
+    return this.mission.cities.find(c => c.tileX === tx && c.tileY === ty)?.name ?? 'das markierte Ziel';
   }
 
-  /** Pulsing golden marker on the victory tile — drawn above fog so the goal is always findable. */
+  private currentObjectiveText(): string {
+    const vc = this.mission.victoryCondition;
+    const phase = state.missionVictoryPhase;
+    if (vc.type === 'reach') {
+      return `Erreiche ${this.cityNameAt(this.mission.victoryTile.x, this.mission.victoryTile.y)}`;
+    }
+    if (vc.type === 'artifact') {
+      const art = ARTIFACTS.find(a => a.id === vc.artifactId);
+      return `Finde: ${art?.name ?? vc.artifactId}`;
+    }
+    if (vc.type === 'boss_then_reach') {
+      if (phase < 1) {
+        const boss = this.mission.enemies.find(e => e.id === vc.enemyId);
+        return `Besiege: ${boss?.name ?? vc.enemyId}`;
+      }
+      return `Erreiche ${this.cityNameAt(this.mission.victoryTile.x, this.mission.victoryTile.y)}`;
+    }
+    if (vc.type === 'artifact_then_reach') {
+      if (phase < 1) {
+        const art = ARTIFACTS.find(a => a.id === vc.artifactId);
+        return `Finde: ${art?.name ?? vc.artifactId}`;
+      }
+      return `Erreiche ${this.cityNameAt(this.mission.victoryTile.x, this.mission.victoryTile.y)}`;
+    }
+    return 'Unbekanntes Ziel';
+  }
+
+  /** Pulsing golden marker on the victory tile — only shown for reach-type phases. */
   private renderVictoryMarker(): void {
+    const vc = this.mission.victoryCondition;
+    if (vc.type === 'artifact') return;
     const { x, y } = hexCenter(this.mission.victoryTile.x, this.mission.victoryTile.y);
     const ring = this.add.graphics().setDepth(12);
     ring.lineStyle(3, 0xffd060, 0.9);
@@ -174,18 +205,39 @@ export class AdventureMap extends Phaser.Scene {
     });
   }
 
-  /** Objective banner across the top of the map. */
+  /** Objective banner across the top of the map — text is updatable when phase changes. */
   private renderObjectiveBanner(): void {
-    const w = 540, h = 30, x = MAP_W / 2 - w / 2, y = 6;
+    const w = 560, h = 30, x = MAP_W / 2 - w / 2, y = 6;
     const g = this.add.graphics().setDepth(60);
     g.fillStyle(0x0a0a05, 0.82);
     g.lineStyle(1, 0xc8a040, 0.7);
     g.fillRoundedRect(x, y, w, h, 6);
     g.strokeRoundedRect(x, y, w, h, 6);
-    this.add.text(MAP_W / 2, y + h / 2,
-      `Mission ${state.currentMissionIdx + 1}/${CAMPAIGN.length}: ${this.mission.title}   ✪ Ziel: Erreiche ${this.goalLabel()}`, {
+    this.objectiveBannerText = this.add.text(MAP_W / 2, y + h / 2,
+      this.bannerContent(), {
         fontSize: '13px', fontFamily: 'Georgia, serif', color: '#ffd060',
       }).setOrigin(0.5).setDepth(61);
+  }
+
+  private bannerContent(): string {
+    return `Mission ${state.currentMissionIdx + 1}/${CAMPAIGN.length}: ${this.mission.title}   ✪ ${this.currentObjectiveText()}`;
+  }
+
+  private updateObjectiveBanner(): void {
+    this.objectiveBannerText?.setText(this.bannerContent());
+  }
+
+  /** Render lore scroll markers on the map. */
+  private renderLoreItems(): void {
+    (this.mission.loreItems ?? []).forEach(lore => {
+      if (isLoreCollected(lore.id)) return;
+      const { x, y } = hexCenter(lore.tileX, lore.tileY);
+      const marker = this.add.text(x, y, '📜', {
+        fontSize: '18px',
+      }).setOrigin(0.5).setDepth(6).setAlpha(0);
+      this.tweens.add({ targets: marker, y: y - 3, duration: 1400, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.loreSprites.set(lore.id, marker);
+    });
   }
 
   // ── Fog of War ─────────────────────────────────────────────────────────────
@@ -209,7 +261,6 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private updateSpriteVisibility(): void {
-    // Resources & enemies only visible when in current sight range (state 2)
     this.mission.resources.forEach(r => {
       const sprite = this.resourceSprites.get(r.id);
       if (sprite) sprite.setAlpha(state.fogMap[r.tileY][r.tileX] === 2 ? 1 : 0);
@@ -217,6 +268,10 @@ export class AdventureMap extends Phaser.Scene {
     this.mission.enemies.forEach(enc => {
       const sprite = this.enemySprites.get(enc.id);
       if (sprite) sprite.setAlpha(state.fogMap[enc.tileY][enc.tileX] === 2 ? 1 : 0);
+    });
+    (this.mission.loreItems ?? []).forEach(lore => {
+      const sprite = this.loreSprites.get(lore.id);
+      if (sprite) sprite.setAlpha(state.fogMap[lore.tileY][lore.tileX] === 2 ? 1 : 0);
     });
   }
 
@@ -400,15 +455,36 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private onHeroArrived(col: number, row: number): void {
+    // Lore collection
+    const lore = (this.mission.loreItems ?? []).find(l => l.tileX === col && l.tileY === row && !isLoreCollected(l.id));
+    if (lore) {
+      collectLore(lore.id);
+      this.loreSprites.get(lore.id)?.destroy();
+      this.loreSprites.delete(lore.id);
+      const ev = STORY_EVENTS[lore.id];
+      if (ev) { this.launchDialog(ev); return; }
+    }
+
+    // Resources
     const res = this.mission.resources.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
     if (res) this.collectResourceItem(res);
 
     const city = this.mission.cities.find(c => c.tileX === col && c.tileY === row);
     if (city) { this.openCity(city.id); return; }
 
+    // Story triggers — gate final victory event on phase 1 for two-step missions
     const storyKey = `${col},${row}`;
     if (this.mission.storyTriggers[storyKey] && !isEventTriggered(this.mission.storyTriggers[storyKey])) {
       const evId = this.mission.storyTriggers[storyKey];
+      const vc = this.mission.victoryCondition;
+      const isFinalVictoryEvent = evId === this.mission.victoryEventId;
+      const requiresPhase = vc.type === 'boss_then_reach' || vc.type === 'artifact_then_reach';
+      if (isFinalVictoryEvent && requiresPhase && state.missionVictoryPhase < 1) {
+        // Boss/artifact not yet completed — don't trigger the final event
+        const enc = this.mission.enemies.find(e => e.tileX === col && e.tileY === row && !isEnemyDefeated(e.id));
+        if (enc) this.startCombat(enc);
+        return;
+      }
       const ev = STORY_EVENTS[evId];
       if (ev) { triggerEvent(evId); this.launchDialog(ev); return; }
     }
@@ -433,6 +509,22 @@ export class AdventureMap extends Phaser.Scene {
         this.showFloat(`${art.name} gefunden!`, 0xc080ff, res.tileX, res.tileY);
         this.manaText.setText(`Mana: ${state.hero.mana}/${state.hero.maxMana}  |  Zauberstärke: ${state.hero.spellPower}`);
         this.heroLvlText.setText(`Stufe ${state.hero.level}  ATK ${state.hero.attack}  DEF ${state.hero.defense}  WIS ${state.hero.knowledge}`);
+      }
+      // Check victory artifact conditions
+      const vc = this.mission.victoryCondition;
+      if (vc.type === 'artifact' && vc.artifactId === res.artifactId) {
+        // Mission victory: show victory event dialog
+        const ev = STORY_EVENTS[this.mission.victoryEventId];
+        if (ev) { triggerEvent(ev.id); this.time.delayedCall(600, () => this.launchDialog(ev)); }
+      } else if (vc.type === 'artifact_then_reach' && vc.artifactId === res.artifactId && state.missionVictoryPhase < 1) {
+        // Phase 1 unlocked: show transition dialog, then reach victoryTile
+        setVictoryPhase(1);
+        saveGame();
+        this.updateObjectiveBanner();
+        if (this.mission.phaseOneEventId) {
+          const ev = STORY_EVENTS[this.mission.phaseOneEventId];
+          if (ev) this.time.delayedCall(600, () => this.launchDialog(ev));
+        }
       }
     }
   }
@@ -489,6 +581,26 @@ export class AdventureMap extends Phaser.Scene {
         this.enemySprites.delete(encounter.id);
         this.refreshArmyPanel(MAP_W);
         this.heroLvlText.setText(`Stufe ${state.hero.level}  ATK ${state.hero.attack}  DEF ${state.hero.defense}  WIS ${state.hero.knowledge}`);
+
+        // Check if this was the boss for a boss_then_reach mission
+        const vc = this.mission.victoryCondition;
+        if ((vc.type === 'boss_then_reach') && vc.enemyId === encounter.id && state.missionVictoryPhase < 1) {
+          setVictoryPhase(1);
+          saveGame();
+          this.updateObjectiveBanner();
+          if (this.mission.phaseOneEventId) {
+            const ev = STORY_EVENTS[this.mission.phaseOneEventId];
+            if (ev) {
+              this.time.delayedCall(300, () => {
+                this.scene.resume('AdventureMap');
+                music.play('map');
+                this.launchDialog(ev);
+              });
+              return;
+            }
+          }
+        }
+
         this.scene.resume('AdventureMap');
         music.play('map');
       } else {

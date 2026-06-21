@@ -29,4 +29,14 @@ export const ARTIFACTS: ArtifactDef[] = [
     description: '+3 Verteidigung und +1 Zauberstärke. Aus Erebors Mithril geschmiedet.',
     tileX: 6, tileY: 11, bonuses: { defense: 3, spellPower: 1 },
   },
+  {
+    id: 'white_tree_fruit', name: 'Frucht des Weißen Baumes', icon: '🌿',
+    description: '+2 Angriff, +2 Verteidigung. Isildur rettete diesen Samen vor Saurons Flammen – Symbol Gondors.',
+    tileX: 0, tileY: 0, bonuses: { attack: 2, defense: 2 },
+  },
+  {
+    id: 'rhun_scepter', name: 'Zepter des Rhûn-Königs', icon: '⚜',
+    description: '+2 Angriff, +2 Zauberstärke. Das Herrschaftszeichen über die Ostlande – bindet die Loyalität der Stämme.',
+    tileX: 0, tileY: 0, bonuses: { attack: 2, spellPower: 2 },
+  },
 ];

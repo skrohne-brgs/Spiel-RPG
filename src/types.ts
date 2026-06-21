@@ -6,6 +6,20 @@ export interface MissionCity {
   recruitOptions: Array<{ unitId: string; cost: number; available: number }>;
 }
 
+export type VictoryCondition =
+  | { type: 'reach' }
+  | { type: 'artifact'; artifactId: string }
+  | { type: 'boss_then_reach'; enemyId: string }
+  | { type: 'artifact_then_reach'; artifactId: string };
+
+export interface LoreItem {
+  id: string;
+  title: string;
+  text: string;
+  tileX: number;
+  tileY: number;
+}
+
 export interface MissionData {
   id: string; title: string; subtitle: string; description: string;
   mapTiles: number[][];
@@ -17,6 +31,9 @@ export interface MissionData {
   startTile: { x: number; y: number };
   victoryEventId: string;
   introEventId?: string;
+  victoryCondition: VictoryCondition;
+  phaseOneEventId?: string;
+  loreItems?: LoreItem[];
 }
 
 export interface UnitDef {
@@ -115,4 +132,6 @@ export interface GameState {
   fogMap: number[][];  // 0=unentdeckt  1=gesehen  2=sichtbar
   currentMissionIdx: number;   // 0–4
   completedMissions: number[];
+  missionVictoryPhase: number;  // 0=start  1=first condition met  2=done
+  collectedLore: string[];
 }
