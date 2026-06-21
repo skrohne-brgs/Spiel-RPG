@@ -85,7 +85,7 @@ export class MainMenu extends Phaser.Scene {
       ctnZone.on('pointerdown', () => {
         music.stop();
         loadGame();
-        this.scene.start('AdventureMap');
+        this.scene.start('CampaignScene');
       });
     }
 

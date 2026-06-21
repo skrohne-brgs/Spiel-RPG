@@ -1,21 +1,21 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../constants';
 import { UNIT_DEFS } from '../data/units';
-import { CITIES } from '../data/cities';
-import type { CityDef } from '../data/cities';
+import { CAMPAIGN } from '../data/campaign';
 import { state } from '../GameState';
-import type { UnitStack } from '../types';
+import type { MissionCity, UnitStack } from '../types';
 
 export class CityScene extends Phaser.Scene {
-  private city!: CityDef;
+  private city!: MissionCity;
   private goldText!: Phaser.GameObjects.Text;
-  private armyPanel!: Phaser.GameObjects.Container;
   private recruitAvailable: number[] = [];
 
   constructor() { super({ key: 'CityScene' }); }
 
-  init(data: { cityId: string }): void {
-    this.city = CITIES.find(c => c.id === data.cityId) ?? CITIES[0];
+  init(data: { cityId: string; missionIdx?: number }): void {
+    const missionIdx = data.missionIdx ?? state.currentMissionIdx;
+    const mission = CAMPAIGN[missionIdx];
+    this.city = mission.cities.find(c => c.id === data.cityId) ?? mission.cities[0];
     this.recruitAvailable = this.city.recruitOptions.map(o => o.available);
   }
 
@@ -76,7 +76,7 @@ export class CityScene extends Phaser.Scene {
   }
 
   private createRecruitRow(
-    opt: CityDef['recruitOptions'][0], idx: number,
+    opt: { unitId: string; cost: number; available: number }, idx: number,
     x: number, y: number, w: number,
   ): void {
     const def = UNIT_DEFS[opt.unitId];

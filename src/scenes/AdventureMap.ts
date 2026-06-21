@@ -3,17 +3,16 @@ import {
   TILE_SIZE, MAP_COLS, MAP_ROWS, SIDEBAR_WIDTH, GAME_WIDTH, GAME_HEIGHT, TILE_CONFIG,
   HEX_SIZE, HEX_W, HEX_OFFSET_Y,
 } from '../constants';
-import { MAP_TILES, ENEMY_ENCOUNTERS, RESOURCES, STORY_TRIGGERS } from '../data/mapData';
+import { CAMPAIGN } from '../data/campaign';
 import { STORY_EVENTS } from '../data/story';
-import { CITIES } from '../data/cities';
 import { ARTIFACTS } from '../data/artifacts';
 import {
   state, isEnemyDefeated, isEventTriggered, triggerEvent,
   isResourceCollected, collectResource, applyArtifact, movementPoints,
-  updateFog, saveGame,
+  updateFog, saveGame, advanceMission,
 } from '../GameState';
 import { music } from '../audio/ChiptuneEngine';
-import type { EnemyEncounter, ResourceOnMap } from '../types';
+import type { EnemyEncounter, ResourceOnMap, MissionData } from '../types';
 
 const MAP_W = MAP_COLS * TILE_SIZE; // 960
 
@@ -63,6 +62,7 @@ const MM_COL: Record<number, number> = {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export class AdventureMap extends Phaser.Scene {
+  private mission!: MissionData;
   private heroSprite!: Phaser.GameObjects.Image;
   private enemySprites   = new Map<string, Phaser.GameObjects.Image>();
   private resourceSprites = new Map<string, Phaser.GameObjects.Image>();
@@ -81,6 +81,7 @@ export class AdventureMap extends Phaser.Scene {
   constructor() { super({ key: 'AdventureMap' }); }
 
   create(): void {
+    this.mission = CAMPAIGN[state.currentMissionIdx];
     this.cameras.main.setBackgroundColor('#0a120a');
     this.movementLeft = movementPoints();
 
@@ -106,11 +107,12 @@ export class AdventureMap extends Phaser.Scene {
   // ── Map ────────────────────────────────────────────────────────────────────
 
   private renderMap(): void {
-    this.add.image(MAP_W / 2, GAME_HEIGHT / 2, 'map_base').setDepth(0);
+    const key = `map_base_${state.currentMissionIdx}`;
+    this.add.image(MAP_W / 2, GAME_HEIGHT / 2, key).setDepth(0);
   }
 
   private renderCities(): void {
-    CITIES.forEach(city => {
+    this.mission.cities.forEach(city => {
       const { x, y } = hexCenter(city.tileX, city.tileY);
       this.add.text(x, y - HEX_SIZE - 2, city.name, {
         fontSize: '10px', color: '#ffd060', stroke: '#000000', strokeThickness: 2,
@@ -119,7 +121,7 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private renderResources(): void {
-    RESOURCES.forEach(r => {
+    this.mission.resources.forEach(r => {
       if (isResourceCollected(r.id)) return;
       const key = r.type === 'artifact' ? 'resource_artifact' : 'resource_gold';
       const { x, y } = hexCenter(r.tileX, r.tileY);
@@ -130,7 +132,7 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private createEnemyMarkers(): void {
-    ENEMY_ENCOUNTERS.forEach(enc => {
+    this.mission.enemies.forEach(enc => {
       if (isEnemyDefeated(enc.id)) return;
       const { x, y } = hexCenter(enc.tileX, enc.tileY);
       const sprite = this.add.image(x, y, 'enemy_marker').setDepth(5).setScale(0.88).setAlpha(0);
@@ -169,11 +171,11 @@ export class AdventureMap extends Phaser.Scene {
 
   private updateSpriteVisibility(): void {
     // Resources & enemies only visible when in current sight range (state 2)
-    RESOURCES.forEach(r => {
+    this.mission.resources.forEach(r => {
       const sprite = this.resourceSprites.get(r.id);
       if (sprite) sprite.setAlpha(state.fogMap[r.tileY][r.tileX] === 2 ? 1 : 0);
     });
-    ENEMY_ENCOUNTERS.forEach(enc => {
+    this.mission.enemies.forEach(enc => {
       const sprite = this.enemySprites.get(enc.id);
       if (sprite) sprite.setAlpha(state.fogMap[enc.tileY][enc.tileX] === 2 ? 1 : 0);
     });
@@ -198,13 +200,13 @@ export class AdventureMap extends Phaser.Scene {
       for (let c = 0; c < MAP_COLS; c++) {
         const fog = state.fogMap[r][c];
         if (fog === 0) continue;
-        this.minimapGfx.fillStyle(MM_COL[MAP_TILES[r][c]], fog === 1 ? 0.35 : 0.9);
+        this.minimapGfx.fillStyle(MM_COL[this.mission.mapTiles[r][c]], fog === 1 ? 0.35 : 0.9);
         this.minimapGfx.fillRect(mx + c * tw, my + r * th, tw - 0.3, th - 0.3);
       }
     }
 
     // Cities (gold dots)
-    CITIES.forEach(city => {
+    this.mission.cities.forEach(city => {
       if (state.fogMap[city.tileY][city.tileX] > 0) {
         this.minimapGfx.fillStyle(0xffd060, 1);
         this.minimapGfx.fillCircle(mx + city.tileX * tw + tw / 2, my + city.tileY * th + th / 2, 2.5);
@@ -212,7 +214,7 @@ export class AdventureMap extends Phaser.Scene {
     });
 
     // Enemies (red dots, only when visible)
-    ENEMY_ENCOUNTERS.forEach(enc => {
+    this.mission.enemies.forEach(enc => {
       if (!isEnemyDefeated(enc.id) && state.fogMap[enc.tileY][enc.tileX] === 2) {
         this.minimapGfx.fillStyle(0xff3333, 1);
         this.minimapGfx.fillCircle(mx + enc.tileX * tw + tw / 2, my + enc.tileY * th + th / 2, 2);
@@ -271,6 +273,11 @@ export class AdventureMap extends Phaser.Scene {
     this.divider(sx + 8, 428, SIDEBAR_WIDTH - 16);
     this.moveText = this.add.text(sx + 14, 442,
       `Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`, { fontSize: '12px', color: '#c0b090' });
+
+    // Mission name
+    this.add.text(sx + SIDEBAR_WIDTH / 2, 456, `Mission ${state.currentMissionIdx + 1}: ${this.mission.title}`, {
+      fontSize: '10px', color: '#807060', wordWrap: { width: SIDEBAR_WIDTH - 16 },
+    }).setOrigin(0.5);
 
     // Minimap label
     this.add.text(sx + SIDEBAR_WIDTH / 2, 460, '── KARTE ──', {
@@ -332,7 +339,7 @@ export class AdventureMap extends Phaser.Scene {
 
   private handleTileClick(col: number, row: number): void {
     if (!this.reachableTiles.has(`${col},${row}`)) return;
-    const cfg  = TILE_CONFIG[MAP_TILES[row][col]];
+    const cfg  = TILE_CONFIG[this.mission.mapTiles[row][col]];
     const cost = Math.max(1, Math.ceil(cfg.moveCost));
     if (this.movementLeft < cost) return;
 
@@ -359,19 +366,20 @@ export class AdventureMap extends Phaser.Scene {
   }
 
   private onHeroArrived(col: number, row: number): void {
-    const res = RESOURCES.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
+    const res = this.mission.resources.find(r => r.tileX === col && r.tileY === row && !isResourceCollected(r.id));
     if (res) this.collectResourceItem(res);
 
-    const city = CITIES.find(c => c.tileX === col && c.tileY === row);
+    const city = this.mission.cities.find(c => c.tileX === col && c.tileY === row);
     if (city) { this.openCity(city.id); return; }
 
     const storyKey = `${col},${row}`;
-    if (STORY_TRIGGERS[storyKey] && !isEventTriggered(STORY_TRIGGERS[storyKey])) {
-      const ev = STORY_EVENTS[STORY_TRIGGERS[storyKey]];
-      if (ev) { triggerEvent(STORY_TRIGGERS[storyKey]); this.launchDialog(ev); return; }
+    if (this.mission.storyTriggers[storyKey] && !isEventTriggered(this.mission.storyTriggers[storyKey])) {
+      const evId = this.mission.storyTriggers[storyKey];
+      const ev = STORY_EVENTS[evId];
+      if (ev) { triggerEvent(evId); this.launchDialog(ev); return; }
     }
 
-    const enc = ENEMY_ENCOUNTERS.find(e => e.tileX === col && e.tileY === row && !isEnemyDefeated(e.id));
+    const enc = this.mission.enemies.find(e => e.tileX === col && e.tileY === row && !isEnemyDefeated(e.id));
     if (enc) this.startCombat(enc);
   }
 
@@ -407,7 +415,7 @@ export class AdventureMap extends Phaser.Scene {
   private openCity(cityId: string): void {
     music.stop();
     this.scene.pause('AdventureMap');
-    this.scene.launch('CityScene', { cityId });
+    this.scene.launch('CityScene', { cityId, missionIdx: state.currentMissionIdx });
     this.scene.get('CityScene').events.once('shutdown', () => {
       this.refreshArmyPanel(MAP_W);
       this.goldText.setText(`⚙ Gold: ${state.gold}`);
@@ -424,6 +432,12 @@ export class AdventureMap extends Phaser.Scene {
         music.stop();
         this.scene.stop('AdventureMap');
         this.scene.start('VictoryScene');
+      } else if (ev.onComplete === 'mission_complete') {
+        music.stop();
+        advanceMission();
+        saveGame();
+        this.scene.stop('AdventureMap');
+        this.scene.start('CampaignScene');
       } else {
         this.scene.resume('AdventureMap');
       }
@@ -465,7 +479,7 @@ export class AdventureMap extends Phaser.Scene {
         const key = `${nx},${ny}`;
         if (visited.has(key)) continue;
         visited.add(key);
-        const cfg = TILE_CONFIG[MAP_TILES[ny][nx]];
+        const cfg = TILE_CONFIG[this.mission.mapTiles[ny][nx]];
         if (!cfg.walkable) continue;
         const nc = cost + Math.max(1, Math.ceil(cfg.moveCost));
         if (nc <= this.movementLeft) { this.reachableTiles.add(key); queue.push([nx, ny, nc]); }
@@ -500,9 +514,10 @@ export class AdventureMap extends Phaser.Scene {
 
   private triggerStartEvent(): void {
     const key = `${state.heroTile.x},${state.heroTile.y}`;
-    if (STORY_TRIGGERS[key] && !isEventTriggered(STORY_TRIGGERS[key])) {
-      const ev = STORY_EVENTS[STORY_TRIGGERS[key]];
-      if (ev) { triggerEvent(STORY_TRIGGERS[key]); this.time.delayedCall(500, () => this.launchDialog(ev)); }
+    if (this.mission.storyTriggers[key] && !isEventTriggered(this.mission.storyTriggers[key])) {
+      const evId = this.mission.storyTriggers[key];
+      const ev = STORY_EVENTS[evId];
+      if (ev) { triggerEvent(evId); this.time.delayedCall(500, () => this.launchDialog(ev)); }
     }
   }
 }

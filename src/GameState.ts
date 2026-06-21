@@ -1,4 +1,4 @@
-import type { GameState, HeroData, UnitStack } from './types';
+import type { GameState, HeroData, UnitStack, MissionData } from './types';
 import { MAP_COLS, MAP_ROWS } from './constants';
 import { UNIT_DEFS } from './data/units';
 import { HERO_DEFS } from './data/heroes';
@@ -34,6 +34,8 @@ export function buildInitialState(heroId: string): GameState {
     collectedResources: [],
     spellCastThisCombat: false,
     fogMap: emptyFog(),
+    currentMissionIdx: 0,
+    completedMissions: [],
   };
 }
 
@@ -77,6 +79,8 @@ export function loadGame(): boolean {
     if (!raw) return false;
     const saved = JSON.parse(raw) as GameState;
     if (!saved.fogMap) saved.fogMap = emptyFog();
+    if (saved.currentMissionIdx === undefined) saved.currentMissionIdx = 0;
+    if (!saved.completedMissions) saved.completedMissions = [];
     state = saved;
     return true;
   } catch { return false; }
@@ -129,4 +133,26 @@ export function applyArtifact(artifactId: string): void {
 
 export function movementPoints(): number {
   return 8 + (state.hero.skills['logistics'] ?? 0) * 2;
+}
+
+// ── Campaign ──────────────────────────────────────────────────────────────────
+
+export function getCurrentMission(): MissionData {
+  const { CAMPAIGN } = require('./data/campaign');
+  return CAMPAIGN[state.currentMissionIdx] as MissionData;
+}
+
+export function advanceMission(): void {
+  if (!state.completedMissions.includes(state.currentMissionIdx)) {
+    state.completedMissions.push(state.currentMissionIdx);
+  }
+  state.currentMissionIdx++;
+  const mission = getCurrentMission();
+  // Reset per-mission state but keep hero, army, gold
+  state.heroTile = { x: mission.startTile.x, y: mission.startTile.y };
+  state.defeatedEnemies = [];
+  state.triggeredEvents = [];
+  state.collectedResources = [];
+  state.spellCastThisCombat = false;
+  state.fogMap = emptyFog();
 }

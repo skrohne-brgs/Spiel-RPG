@@ -164,6 +164,6 @@ export class HeroSelectScene extends Phaser.Scene {
 
   private startGame(): void {
     resetState(this.selected.id);
-    this.scene.start('AdventureMap');
+    this.scene.start('CampaignScene');
   }
 }

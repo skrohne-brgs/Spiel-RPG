@@ -4,7 +4,7 @@ import {
   HEX_SIZE, HEX_W, HEX_OFFSET_Y,
   COMBAT_CELL_W, COMBAT_CELL_H,
 } from '../constants';
-import { MAP_TILES } from '../data/mapData';
+import { CAMPAIGN } from '../data/campaign';
 
 const BASE_COLOR: Record<number, string> = {
   0: '#4a8a28', // grass
@@ -21,7 +21,9 @@ export class Boot extends Phaser.Scene {
   constructor() { super({ key: 'Boot' }); }
 
   create(): void {
-    this.generateMapTexture();
+    CAMPAIGN.forEach((mission, i) => {
+      this.generateMapTexture(mission.mapTiles, `map_base_${i}`);
+    });
     this.generateUnitTextures();
     this.generateHeroTexture();
     this.generateEnemyMarkerTexture();
@@ -35,10 +37,10 @@ export class Boot extends Phaser.Scene {
     return v - Math.floor(v);
   }
 
-  private neighborType(col: number, row: number, dx: number, dy: number): number {
+  private neighborType(tiles: number[][], col: number, row: number, dx: number, dy: number): number {
     const c = col + dx, r = row + dy;
     if (c < 0 || c >= MAP_COLS || r < 0 || r >= MAP_ROWS) return -1;
-    return MAP_TILES[r][c];
+    return tiles[r][c];
   }
 
   // Centre pixel of hex at (col, row)
@@ -62,10 +64,10 @@ export class Boot extends Phaser.Scene {
   }
 
   // ── Full-map canvas ────────────────────────────────────────────────────────
-  private generateMapTexture(): void {
+  private generateMapTexture(tiles: number[][], key: string): void {
     const W = MAP_COLS * TILE_SIZE; // 960
     const H = MAP_ROWS * TILE_SIZE; // 720
-    const tex = this.textures.createCanvas('map_base', W, H)!;
+    const tex = this.textures.createCanvas(key, W, H)!;
     const ctx = tex.context as unknown as CanvasRenderingContext2D;
 
     // ── Pass 1: Bilinear blended base ─────────────────────────────────────────
@@ -75,7 +77,7 @@ export class Boot extends Phaser.Scene {
     const sc = sm.getContext('2d')!;
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        sc.fillStyle = BASE_COLOR[MAP_TILES[row][col]];
+        sc.fillStyle = BASE_COLOR[tiles[row][col]];
         sc.fillRect(col * SC, row * SC, SC, SC);
       }
     }
@@ -86,11 +88,11 @@ export class Boot extends Phaser.Scene {
     // ── Pass 2: Shore & cliff gradients ───────────────────────────────────────
     for (let row = 0; row < MAP_ROWS; row++) {
       for (let col = 0; col < MAP_COLS; col++) {
-        const t = MAP_TILES[row][col];
+        const t = tiles[row][col];
         const x = col * TILE_SIZE, y = row * TILE_SIZE, S = TILE_SIZE;
         if (t !== 3) {
           for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-            if (this.neighborType(col, row, dx, dy) !== 3) continue;
+            if (this.neighborType(tiles, col, row, dx, dy) !== 3) continue;
             const ex = x + (dx === 1 ? S - 6 : 0), ey = y + (dy === 1 ? S - 6 : 0);
             const ew = dx !== 0 ? 6 : S,  eh = dy !== 0 ? 6 : S;
             const gx0 = ex + (dx === 1 ? 0 : dx === -1 ? ew : 0);
@@ -103,7 +105,7 @@ export class Boot extends Phaser.Scene {
           }
         } else {
           for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
-            const n = this.neighborType(col, row, dx, dy);
+            const n = this.neighborType(tiles, col, row, dx, dy);
             if (n === 3 || n === -1) continue;
             const ex = x + (dx === 1 ? S - 8 : 0), ey = y + (dy === 1 ? S - 8 : 0);
             const ew = dx !== 0 ? 8 : S,  eh = dy !== 0 ? 8 : S;
@@ -130,7 +132,7 @@ export class Boot extends Phaser.Scene {
     for (const targetType of [3, 6, 5, 0, 4, 7, 2, 1]) {
       for (let row = 0; row < MAP_ROWS; row++) {
         for (let col = 0; col < MAP_COLS; col++) {
-          if (MAP_TILES[row][col] !== targetType) continue;
+          if (tiles[row][col] !== targetType) continue;
           const { x: cx, y: cy } = this.hc(col, row);
           ctx.save();
           this.drawDetail(ctx, targetType, cx, cy, col, row);

@@ -10,6 +10,7 @@ import { CityScene } from './scenes/CityScene';
 import { LevelUpScene } from './scenes/LevelUpScene';
 import { VictoryScene } from './scenes/VictoryScene';
 import { GameOverScene } from './scenes/GameOverScene';
+import { CampaignScene } from './scenes/CampaignScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
   parent: 'game-container',
   scene: [
     Boot, MainMenu, HeroSelectScene,
-    AdventureMap, CombatScene, DialogScene,
+    CampaignScene, AdventureMap, CombatScene, DialogScene,
     CityScene, LevelUpScene,
     VictoryScene, GameOverScene,
   ],
