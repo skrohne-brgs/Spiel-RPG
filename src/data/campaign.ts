@@ -17,6 +17,7 @@ export const CAMPAIGN: MissionData[] = [
     cities: CITIES.map(c => ({
       id: c.id, name: c.name, description: c.description,
       tileX: c.tileX, tileY: c.tileY,
+      faction: c.faction,
       recruitOptions: c.recruitOptions,
     })),
     victoryTile: { x: 17, y: 10 },
@@ -113,7 +114,7 @@ export const CAMPAIGN: MissionData[] = [
     cities: [
       {
         id: 'pelargir', name: 'Pelargir', description: 'Ältester Hafen Gondors am Anduin.',
-        tileX: 5, tileY: 13,
+        tileX: 5, tileY: 13, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'numenorean_warrior', cost: 50, available: 20 },
           { unitId: 'numenorean_archer',  cost: 70, available: 12 },
@@ -121,7 +122,7 @@ export const CAMPAIGN: MissionData[] = [
       },
       {
         id: 'osgiliath', name: 'Osgiliath', description: 'Hauptstadt Gondors an beiden Ufern des Anduin.',
-        tileX: 9, tileY: 7,
+        tileX: 9, tileY: 7, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'numenorean_warrior', cost: 50, available: 15 },
           { unitId: 'dunedain_ranger',    cost: 90, available: 8  },
@@ -129,7 +130,7 @@ export const CAMPAIGN: MissionData[] = [
       },
       {
         id: 'minas_anor', name: 'Minas Anor', description: 'Die Turm der Sonne – Festung Gondors.',
-        tileX: 17, tileY: 2,
+        tileX: 17, tileY: 2, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'elven_warrior',   cost: 120, available: 8  },
           { unitId: 'elven_cavalry',   cost: 180, available: 4  },
@@ -225,7 +226,7 @@ export const CAMPAIGN: MissionData[] = [
     cities: [
       {
         id: 'caradhras_camp', name: 'Caradhras-Lager', description: 'Vorgeschobenes Lager am Eingang der Bergpässe.',
-        tileX: 1, tileY: 7,
+        tileX: 1, tileY: 7, faction: 'dwarf' as const,
         recruitOptions: [
           { unitId: 'numenorean_warrior', cost: 50,  available: 18 },
           { unitId: 'dunedain_ranger',    cost: 90,  available: 10 },
@@ -323,7 +324,7 @@ export const CAMPAIGN: MissionData[] = [
     cities: [
       {
         id: 'allianz_lager', name: 'Verbündeten-Lager', description: 'Befestigtes Lager der Allianz an der Grenze zu Rhûn.',
-        tileX: 0, tileY: 7,
+        tileX: 0, tileY: 7, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'numenorean_warrior', cost: 50,  available: 20 },
           { unitId: 'elven_warrior',      cost: 120, available: 10 },
@@ -332,7 +333,7 @@ export const CAMPAIGN: MissionData[] = [
       },
       {
         id: 'rhun_citadel', name: 'Rhûn-Zitadelle', description: 'Die gefürchtete Festung der Easterlings.',
-        tileX: 18, tileY: 2,
+        tileX: 18, tileY: 2, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'dunedain_ranger', cost: 90, available: 8 },
         ],
@@ -427,7 +428,7 @@ export const CAMPAIGN: MissionData[] = [
     cities: [
       {
         id: 'morannon_camp', name: 'Morannon-Lager', description: 'Lager der Letzten Allianz vor dem Schwarzen Tor.',
-        tileX: 1, tileY: 11,
+        tileX: 1, tileY: 11, faction: 'human' as const,
         recruitOptions: [
           { unitId: 'numenorean_warrior', cost: 50,  available: 25 },
           { unitId: 'elven_warrior',      cost: 120, available: 15 },

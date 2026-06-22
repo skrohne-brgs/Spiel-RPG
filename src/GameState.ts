@@ -1,8 +1,9 @@
-import type { GameState, HeroData, UnitStack, MissionData } from './types';
+import type { GameState, HeroData, UnitStack, MissionData, CityState } from './types';
 import { MAP_COLS, MAP_ROWS } from './constants';
 import { UNIT_DEFS } from './data/units';
 import { HERO_DEFS } from './data/heroes';
 import { ARTIFACTS } from './data/artifacts';
+import { BUILDING_DEFS } from './data/buildings';
 
 function makeStack(unitId: string, count: number): UnitStack {
   const def = UNIT_DEFS[unitId];
@@ -40,6 +41,7 @@ export function buildInitialState(heroId: string): GameState {
     missionVictoryPhase: 0,
     collectedLore: [],
     completedSideObjectives: [],
+    cityStates: {},
   };
 }
 
@@ -89,6 +91,7 @@ export function loadGame(): boolean {
     if (!saved.collectedLore) saved.collectedLore = [];
     if (!saved.completedSideObjectives) saved.completedSideObjectives = [];
     if (!saved.hero.skillPoints) saved.hero.skillPoints = 0;
+    if (!saved.cityStates) saved.cityStates = {};
     state = saved;
     return true;
   } catch { return false; }
@@ -177,4 +180,81 @@ export function advanceMission(): void {
   state.missionVictoryPhase = 0;
   state.collectedLore = [];
   state.completedSideObjectives = [];
+  state.cityStates = {};
+}
+
+// ── City Building System ──────────────────────────────────────────────────────
+
+export function getCityState(cityId: string): CityState {
+  if (!state.cityStates[cityId]) {
+    state.cityStates[cityId] = {
+      builtBuildings: [],
+      unitStockpile: [],
+      turnCounter: 0,
+      oneTimeApplied: {},
+    };
+  }
+  return state.cityStates[cityId];
+}
+
+export function processCityProduction(cityId: string): void {
+  const cs = getCityState(cityId);
+  cs.turnCounter++;
+
+  for (const buildingId of cs.builtBuildings) {
+    const def = BUILDING_DEFS.find(b => b.id === buildingId);
+    if (!def) continue;
+
+    const eff = def.effect;
+    if (eff.type === 'produce_unit') {
+      if (cs.turnCounter % eff.intervalTurns === 0) {
+        const existing = cs.unitStockpile.find(s => s.unitId === eff.unitId);
+        if (existing) {
+          existing.count += eff.count;
+        } else {
+          cs.unitStockpile.push({ unitId: eff.unitId, count: eff.count });
+        }
+      }
+    } else if (eff.type === 'gold_per_turn') {
+      state.gold += eff.amount;
+    }
+    // one_time_stat and mana_restore are not processed on turn end
+  }
+}
+
+export function collectCityStockpile(cityId: string): void {
+  const cs = getCityState(cityId);
+  for (const item of cs.unitStockpile) {
+    const def = UNIT_DEFS[item.unitId];
+    if (!def) continue;
+    const existing = state.playerArmy.find(s => s.id === item.unitId);
+    if (existing) {
+      existing.count += item.count;
+    } else {
+      state.playerArmy.push({ ...def, count: item.count, currentHp: def.maxHp });
+    }
+  }
+  cs.unitStockpile = [];
+}
+
+export function buildBuilding(cityId: string, buildingId: string): void {
+  const def = BUILDING_DEFS.find(b => b.id === buildingId);
+  if (!def) return;
+
+  state.gold -= def.cost;
+  const cs = getCityState(cityId);
+  cs.builtBuildings.push(buildingId);
+
+  // Apply one-time stat effects immediately
+  if (def.effect.type === 'one_time_stat' && !cs.oneTimeApplied[buildingId]) {
+    cs.oneTimeApplied[buildingId] = true;
+    const { defense, maxHp } = def.effect;
+    state.playerArmy.forEach(u => {
+      if (defense) u.defense += defense;
+      if (maxHp) {
+        u.maxHp += maxHp;
+        u.currentHp = Math.min(u.currentHp + maxHp, u.maxHp);
+      }
+    });
+  }
 }

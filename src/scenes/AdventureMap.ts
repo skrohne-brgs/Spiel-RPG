@@ -11,6 +11,7 @@ import {
   isResourceCollected, collectResource, applyArtifact, movementPoints,
   updateFog, saveGame, advanceMission, setVictoryPhase,
   collectLore, isLoreCollected, completeSideObjective, isSideObjectiveCompleted,
+  processCityProduction,
 } from '../GameState';
 import type { SideObjective } from '../types';
 import { UNIT_DEFS } from '../data/units';
@@ -832,6 +833,13 @@ export class AdventureMap extends Phaser.Scene {
   private endTurn(): void {
     this.turn++;
     this.movementLeft = movementPoints();
+
+    // Process building production for all cities in this mission
+    this.mission.cities.forEach(city => processCityProduction(city.id));
+
+    // Update gold display in case marktplatz produced gold
+    this.goldText.setText(`⚙ Gold: ${state.gold}`);
+
     this.computeReachable();
     this.renderHighlights();
     this.moveText.setText(`Bewegung: ${this.movementLeft} / ${movementPoints()}  |  Zug: ${this.turn}`);

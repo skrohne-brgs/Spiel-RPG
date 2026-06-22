@@ -1,9 +1,12 @@
+import type { CityFaction } from '../types';
+
 export interface CityDef {
   id: string;
   name: string;
   description: string;
   tileX: number;
   tileY: number;
+  faction: CityFaction;
   recruitOptions: Array<{ unitId: string; cost: number; available: number }>;
 }
 
@@ -13,6 +16,7 @@ export const CITIES: CityDef[] = [
     name: 'Annúminas',
     description: 'Hauptstadt von Arnor, erbaut von Elendil am Nenuial-See.',
     tileX: 5, tileY: 2,
+    faction: 'human',
     recruitOptions: [
       { unitId: 'numenorean_warrior', cost: 50,  available: 20 },
       { unitId: 'numenorean_archer',  cost: 70,  available: 10 },
@@ -23,6 +27,7 @@ export const CITIES: CityDef[] = [
     name: 'Lond Daer',
     description: 'Alter Númenórischer Hafen an der Brandymündung.',
     tileX: 3, tileY: 8,
+    faction: 'human',
     recruitOptions: [
       { unitId: 'numenorean_warrior', cost: 50,  available: 10 },
       { unitId: 'dunedain_ranger',    cost: 90,  available: 8  },
@@ -33,6 +38,7 @@ export const CITIES: CityDef[] = [
     name: 'Bruchtal',
     description: 'Elronds Zuflucht. Gil-galads Krieger sammeln sich hier.',
     tileX: 10, tileY: 3,
+    faction: 'elf',
     recruitOptions: [
       { unitId: 'elven_warrior',   cost: 120, available: 10 },
       { unitId: 'elven_cavalry',   cost: 180, available: 5  },

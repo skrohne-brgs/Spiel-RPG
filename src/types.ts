@@ -1,9 +1,19 @@
 export interface Position { x: number; y: number; }
 
+export type CityFaction = 'human' | 'elf' | 'dwarf';
+
 export interface MissionCity {
   id: string; name: string; description: string;
   tileX: number; tileY: number;
+  faction: CityFaction;
   recruitOptions: Array<{ unitId: string; cost: number; available: number }>;
+}
+
+export interface CityState {
+  builtBuildings: string[];
+  unitStockpile: Array<{ unitId: string; count: number }>;
+  turnCounter: number;
+  oneTimeApplied: Record<string, boolean>;
 }
 
 export type VictoryCondition =
@@ -146,4 +156,5 @@ export interface GameState {
   missionVictoryPhase: number;  // 0=start  1=first condition met  2=done
   collectedLore: string[];
   completedSideObjectives: string[];
+  cityStates: Record<string, CityState>;
 }
