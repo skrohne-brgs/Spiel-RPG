@@ -4,10 +4,10 @@ import { CITIES, getCity } from '../data/cities';
 import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame } from '../state';
 import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 import { companyValue, checkMilestones } from '../sim/milestones';
+import mapPng from '../assets/map.png';
 
-// Kartenübersicht: Europakarte mit Städten, Reisen kostet einen Monat.
-// Die Karte ist vorerst prozedural gezeichnet; kann später durch eine
-// Bilddatei (assets/map.png) ersetzt werden.
+// Kartenübersicht: Europakarte (Bilddatei, Quelle: assets-src/map.svg)
+// mit Städten; Reisen kostet einen Monat.
 export class MapScene extends Phaser.Scene {
   private hudGold!: Phaser.GameObjects.Text;
   private hudValue!: Phaser.GameObjects.Text;
@@ -18,6 +18,10 @@ export class MapScene extends Phaser.Scene {
 
   constructor() {
     super('MapScene');
+  }
+
+  preload(): void {
+    this.load.image('map', mapPng);
   }
 
   create(): void {
@@ -34,16 +38,10 @@ export class MapScene extends Phaser.Scene {
   }
 
   private drawMap(): void {
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.sea);
-    g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    // grobe Landmasse als Platzhalter
-    g.fillStyle(COLORS.land);
-    g.fillRoundedRect(80, 120, 900, 420, 80);
-    g.fillRoundedRect(100, 480, 250, 180, 60);
-    g.fillRoundedRect(560, 480, 260, 200, 60);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'map');
 
     // Routen
+    const g = this.add.graphics();
     g.lineStyle(3, COLORS.route, 0.8);
     const drawn = new Set<string>();
     for (const city of CITIES) {

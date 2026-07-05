@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <radialGradient id="vignette" cx="50%" cy="50%" r="75%">
+      <stop offset="60%" stop-color="#3a2a14" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#3a2a14" stop-opacity="0.35"/>
+    </radialGradient>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.05 0" result="na"/>
+      <feComposite in="na" in2="SourceGraphic" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Meer -->
+  <rect width="1280" height="720" fill="#5a7d8a"/>
+  <g stroke="#4e6f7c" stroke-width="2" fill="none" opacity="0.6">
+    <path d="M 60 320 q 30 -12 60 0 q 30 12 60 0"/>
+    <path d="M 120 420 q 30 -12 60 0 q 30 12 60 0"/>
+    <path d="M 60 540 q 25 -10 50 0 q 25 10 50 0" transform="translate(340,120)"/>
+    <path d="M 900 620 q 30 -12 60 0 q 30 12 60 0"/>
+    <path d="M 1050 250 q 30 -12 60 0 q 30 12 60 0"/>
+    <path d="M 460 640 q 30 -12 60 0 q 30 12 60 0"/>
+    <path d="M 180 160 q 30 -12 60 0 q 30 12 60 0"/>
+  </g>
+
+  <!-- Britannien -->
+  <path d="M 300 40 L 350 55 L 375 95 L 360 140 L 320 170 L 270 160 L 245 120 L 255 75 Z"
+        fill="#a89468" stroke="#6b5636" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Iberische Halbinsel -->
+  <path d="M 60 520 L 140 468 L 260 462 L 340 505 L 358 552 L 335 640 L 255 692 L 130 695 L 65 640 Z"
+        fill="#a89468" stroke="#6b5636" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Hauptkontinent -->
+  <path d="M 358 552 L 352 470 L 372 385 L 348 330 L 425 288 L 432 250 L 448 213
+           L 505 198 L 545 172 L 588 100 L 622 152 L 662 172 L 762 142 L 902 150
+           L 1052 118 L 1280 138
+           L 1280 720 L 838 720
+           L 806 646 L 762 566 L 706 547
+           L 722 560 L 742 622 L 758 688 L 720 714 L 700 700 L 640 660 L 618 600 L 592 558 L 562 512
+           L 502 506 L 422 522 Z"
+        fill="#a89468" stroke="#6b5636" stroke-width="4" stroke-linejoin="round"/>
+
+  <!-- Korsika & Sardinien -->
+  <ellipse cx="560" cy="618" rx="14" ry="24" fill="#a89468" stroke="#6b5636" stroke-width="3"/>
+  <ellipse cx="552" cy="682" rx="16" ry="26" fill="#a89468" stroke="#6b5636" stroke-width="3"/>
+
+  <!-- Flüsse: Rhein & Donau -->
+  <g stroke="#4e6f7c" stroke-width="3" fill="none" opacity="0.8">
+    <path d="M 452 230 Q 500 280 528 330 Q 550 380 560 430"/>
+    <path d="M 600 430 Q 700 428 798 402 Q 900 372 1010 350 Q 1120 332 1230 340"/>
+  </g>
+
+  <!-- Alpen -->
+  <g fill="#8a7850" stroke="#5c4a2e" stroke-width="2" stroke-linejoin="round">
+    <path d="M 545 500 l 16 -26 l 16 26 Z"/>
+    <path d="M 575 492 l 18 -30 l 18 30 Z"/>
+    <path d="M 610 498 l 17 -28 l 17 28 Z"/>
+    <path d="M 645 504 l 16 -26 l 16 26 Z"/>
+    <path d="M 678 496 l 17 -28 l 17 28 Z"/>
+    <path d="M 712 502 l 15 -24 l 15 24 Z"/>
+    <path d="M 596 520 l 14 -22 l 14 22 Z"/>
+    <path d="M 660 524 l 13 -20 l 13 20 Z"/>
+  </g>
+  <!-- Pyrenäen -->
+  <g fill="#8a7850" stroke="#5c4a2e" stroke-width="2" stroke-linejoin="round">
+    <path d="M 352 528 l 13 -20 l 13 20 Z"/>
+    <path d="M 380 522 l 13 -20 l 13 20 Z"/>
+    <path d="M 408 528 l 12 -18 l 12 18 Z"/>
+  </g>
+  <!-- Karpaten -->
+  <g fill="#8a7850" stroke="#5c4a2e" stroke-width="2" stroke-linejoin="round">
+    <path d="M 920 250 l 14 -22 l 14 22 Z"/>
+    <path d="M 950 258 l 14 -22 l 14 22 Z"/>
+    <path d="M 980 268 l 13 -20 l 13 20 Z"/>
+  </g>
+
+  <!-- Wälder (Baumgruppen) -->
+  <g fill="#7d7040" stroke="#5c4a2e" stroke-width="1.5">
+    <circle cx="520" cy="300" r="8"/><circle cx="534" cy="292" r="7"/><circle cx="546" cy="302" r="8"/>
+    <circle cx="720" cy="250" r="8"/><circle cx="734" cy="242" r="7"/><circle cx="746" cy="252" r="8"/>
+    <circle cx="960" cy="440" r="8"/><circle cx="974" cy="432" r="7"/><circle cx="986" cy="442" r="8"/>
+    <circle cx="240" cy="560" r="8"/><circle cx="254" cy="552" r="7"/><circle cx="266" cy="562" r="8"/>
+    <circle cx="1080" cy="200" r="8"/><circle cx="1094" cy="192" r="7"/><circle cx="1106" cy="202" r="8"/>
+  </g>
+
+  <!-- Meeresbeschriftungen -->
+  <g font-family="Georgia, serif" font-style="italic" fill="#2f4a54" opacity="0.85">
+    <text x="130" y="300" font-size="26" transform="rotate(-12 130 300)">Oceanus Atlanticus</text>
+    <text x="400" y="620" font-size="22" transform="rotate(-6 400 620)">Mare Mediterraneum</text>
+    <text x="740" y="110" font-size="20">Mare Balticum</text>
+    <text x="745" y="640" font-size="18" transform="rotate(55 745 640)">Mare Adriaticum</text>
+  </g>
+
+  <!-- Kompassrose -->
+  <g transform="translate(1120,600)" stroke="#3a2a14" fill="#e8d9b0">
+    <circle r="46" fill="#5a7d8a" stroke-width="2" opacity="0.9"/>
+    <circle r="40" fill="none" stroke-width="1.5"/>
+    <path d="M 0 -38 L 8 -8 L 0 0 L -8 -8 Z" fill="#8a2f1f"/>
+    <path d="M 0 38 L 8 8 L 0 0 L -8 8 Z"/>
+    <path d="M -38 0 L -8 -8 L 0 0 L -8 8 Z"/>
+    <path d="M 38 0 L 8 -8 L 0 0 L 8 8 Z"/>
+    <text x="0" y="-52" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#e8d9b0" stroke="none">N</text>
+  </g>
+
+  <!-- Vignette & Rahmen -->
+  <rect width="1280" height="720" fill="url(#vignette)"/>
+  <rect x="8" y="8" width="1264" height="704" fill="none" stroke="#3a2a14" stroke-width="3" opacity="0.6"/>
+  <rect x="16" y="16" width="1248" height="688" fill="none" stroke="#3a2a14" stroke-width="1.5" opacity="0.6"/>
+</svg>
