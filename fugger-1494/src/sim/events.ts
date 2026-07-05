@@ -10,8 +10,10 @@ export interface GameEvent {
 }
 
 // Beim Reisen: Gefahr durch Raubritter auf der Route.
+// Nach dem Ewigen Landfrieden (1495) sind die Straßen deutlich sicherer.
 export function rollTravelEvent(s: GameState): GameEvent | null {
-  if (Math.random() >= 0.15) return null;
+  const chance = s.flags.landfriede ? 0.07 : 0.15;
+  if (Math.random() >= chance) return null;
 
   if (cargoTotal(s) > 0 && Math.random() < 0.6) {
     // Ein Teil der Fracht geht verloren.

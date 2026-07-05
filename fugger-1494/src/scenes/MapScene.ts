@@ -3,12 +3,14 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { CITIES, getCity } from '../data/cities';
 import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame } from '../state';
 import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
+import { companyValue, checkMilestones } from '../sim/milestones';
 
 // Kartenübersicht: Europakarte mit Städten, Reisen kostet einen Monat.
 // Die Karte ist vorerst prozedural gezeichnet; kann später durch eine
 // Bilddatei (assets/map.png) ersetzt werden.
 export class MapScene extends Phaser.Scene {
   private hudGold!: Phaser.GameObjects.Text;
+  private hudValue!: Phaser.GameObjects.Text;
   private hudDate!: Phaser.GameObjects.Text;
   private hudCargo!: Phaser.GameObjects.Text;
   private playerMarker!: Phaser.GameObjects.Arc;
@@ -81,8 +83,9 @@ export class MapScene extends Phaser.Scene {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: COLORS.uiText,
     };
     this.hudDate = this.add.text(24, 20, '', style).setDepth(11);
-    this.hudGold = this.add.text(300, 20, '', { ...style, color: COLORS.uiAccent }).setDepth(11);
-    this.hudCargo = this.add.text(560, 20, '', style).setDepth(11);
+    this.hudGold = this.add.text(220, 20, '', { ...style, color: COLORS.uiAccent }).setDepth(11);
+    this.hudValue = this.add.text(430, 20, '', { ...style, color: COLORS.uiDim }).setDepth(11);
+    this.hudCargo = this.add.text(680, 20, '', style).setDepth(11);
 
     const wait = this.add.text(GAME_WIDTH - 24, 20, '⌛ Monat warten', {
       ...style, color: COLORS.uiAccent,
@@ -114,6 +117,7 @@ export class MapScene extends Phaser.Scene {
     }
     const m = rollMarketEvent(s);
     if (m) events.push(m);
+    events.push(...checkMilestones(s));
     if (events.length > 0) saveGame();
     this.refresh();
     this.showEvents(events);
@@ -137,11 +141,13 @@ export class MapScene extends Phaser.Scene {
       color: '#e8d9b0', backgroundColor: '#6b5636',
       padding: { x: 24, y: 6 },
     }).setOrigin(0.5).setDepth(22).setInteractive({ useHandCursor: true });
-    btn.on('pointerdown', () => {
+    const close = () => {
       for (const obj of [dim, panel, title, text, btn]) obj.destroy();
       this.refresh();
       this.showEvents(events);
-    });
+    };
+    btn.on('pointerdown', close);
+    dim.on('pointerdown', close);
   }
 
   private refresh(): void {
@@ -150,6 +156,7 @@ export class MapScene extends Phaser.Scene {
     this.playerMarker.setPosition(city.x, city.y - 20);
     this.hudDate.setText(dateLabel(s));
     this.hudGold.setText(`${s.gold} Gulden`);
+    this.hudValue.setText(`Firmenwert: ${companyValue(s)} fl.`);
     this.hudCargo.setText(`Fracht: ${cargoTotal(s)}/${WAGON_CAPACITY} – in ${city.name} (Klick: Markt)`);
   }
 }

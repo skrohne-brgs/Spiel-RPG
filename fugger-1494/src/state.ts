@@ -8,6 +8,8 @@ export interface GameState {
   cityId: string;
   cargo: Record<string, number>;
   market: MarketState;
+  milestones: string[]; // bereits ausgelöste Meilenstein-IDs
+  flags: Record<string, boolean>; // dauerhafte Effekte (z.B. Landfriede)
 }
 
 const SAVE_KEY = 'fugger1494-save';
@@ -22,6 +24,8 @@ export function newGame(): GameState {
     cityId: 'augsburg',
     cargo: {},
     market: createMarket(),
+    milestones: [],
+    flags: {},
   };
   saveGame();
   return state;
@@ -54,6 +58,9 @@ export function loadGame(): GameState | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     state = JSON.parse(raw) as GameState;
+    // Ältere Spielstände um neue Felder ergänzen.
+    state.milestones ??= [];
+    state.flags ??= {};
     return state;
   } catch {
     return null;
