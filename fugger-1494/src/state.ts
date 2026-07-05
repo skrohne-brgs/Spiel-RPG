@@ -10,6 +10,8 @@ export interface GameState {
   market: MarketState;
 }
 
+const SAVE_KEY = 'fugger1494-save';
+
 let state: GameState | null = null;
 
 export function newGame(): GameState {
@@ -21,12 +23,41 @@ export function newGame(): GameState {
     cargo: {},
     market: createMarket(),
   };
+  saveGame();
   return state;
 }
 
 export function getState(): GameState {
   if (!state) throw new Error('Spiel wurde nicht gestartet');
   return state;
+}
+
+export function hasSave(): boolean {
+  try {
+    return localStorage.getItem(SAVE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export function saveGame(): void {
+  if (!state) return;
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch {
+    // Speicher voll oder blockiert (z.B. file://-Sandbox) – Spiel läuft weiter.
+  }
+}
+
+export function loadGame(): GameState | null {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    state = JSON.parse(raw) as GameState;
+    return state;
+  } catch {
+    return null;
+  }
 }
 
 export function cargoTotal(s: GameState): number {
@@ -45,4 +76,5 @@ export function endTurn(s: GameState): void {
     s.year += 1;
   }
   advanceMarket(s.market);
+  saveGame();
 }

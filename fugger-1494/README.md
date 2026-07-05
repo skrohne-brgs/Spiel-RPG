@@ -28,9 +28,11 @@ npm run build    # erzeugt dist/index.html als einzelne Datei
 - [x] Reisen zwischen verbundenen Städten (1 Monat pro Reise)
 - [x] Marktmenü: 7 Waren kaufen/verkaufen, Preise je Stadt (Erzeuger billig, Nachfrage teuer)
 - [x] Monatliche Preisschwankungen (Random Walk mit Rückzug zur Mitte)
-- [ ] Speichern/Laden
-- [ ] Ereignisse (Räuber, Missernte, Pest)
+- [x] Hauptmenü (Neues Spiel / Weiterspielen)
+- [x] Speichern/Laden (automatisch jeden Monat, localStorage)
+- [x] Ereignisse: Raubritter & Wegzoll beim Reisen, Knappheit/Schwemme auf Märkten
 - [ ] Kartengrafik als Bilddatei statt Platzhalter
+- [ ] Siegbedingung / Punktestand (Firmenwert)
 
 Danach: Produktionsketten (Phase 2), Bankwesen (Phase 3),
 Politik & Konkurrenz-KI (Phase 4) – Details im Konzeptplan.

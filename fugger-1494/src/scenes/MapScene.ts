@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { CITIES, getCity } from '../data/cities';
-import { getState, endTurn, dateLabel, cargoTotal, newGame } from '../state';
+import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame } from '../state';
+import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 
 // Kartenübersicht: Europakarte mit Städten, Reisen kostet einen Monat.
 // Die Karte ist vorerst prozedural gezeichnet; kann später durch eine
@@ -86,10 +87,7 @@ export class MapScene extends Phaser.Scene {
     const wait = this.add.text(GAME_WIDTH - 24, 20, '⌛ Monat warten', {
       ...style, color: COLORS.uiAccent,
     }).setOrigin(1, 0).setDepth(11).setInteractive({ useHandCursor: true });
-    wait.on('pointerdown', () => {
-      endTurn(getState());
-      this.refresh();
-    });
+    wait.on('pointerdown', () => this.passMonth(false));
   }
 
   private onCityClicked(cityId: string): void {
@@ -101,9 +99,49 @@ export class MapScene extends Phaser.Scene {
     const here = getCity(s.cityId);
     if (here.connections.includes(cityId)) {
       s.cityId = cityId;
-      endTurn(s);
-      this.refresh();
+      this.passMonth(true);
     }
+  }
+
+  // Ein Monat vergeht (Reise oder Warten); danach werden Ereignisse gewürfelt.
+  private passMonth(traveled: boolean): void {
+    const s = getState();
+    endTurn(s);
+    const events: GameEvent[] = [];
+    if (traveled) {
+      const e = rollTravelEvent(s);
+      if (e) events.push(e);
+    }
+    const m = rollMarketEvent(s);
+    if (m) events.push(m);
+    if (events.length > 0) saveGame();
+    this.refresh();
+    this.showEvents(events);
+  }
+
+  private showEvents(events: GameEvent[]): void {
+    const event = events.shift();
+    if (!event) return;
+    const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.5)
+      .setDepth(20).setInteractive();
+    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 560, 280, COLORS.parchment)
+      .setStrokeStyle(4, COLORS.gold).setDepth(21);
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, event.title, {
+      fontFamily: 'Georgia, serif', fontSize: '30px', color: '#8a2f1f', fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(22);
+    const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, event.text, {
+      fontFamily: 'Georgia, serif', fontSize: '20px', color: '#3a2a14', align: 'center',
+    }).setOrigin(0.5).setDepth(22);
+    const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, 'Weiter', {
+      fontFamily: 'Georgia, serif', fontSize: '22px',
+      color: '#e8d9b0', backgroundColor: '#6b5636',
+      padding: { x: 24, y: 6 },
+    }).setOrigin(0.5).setDepth(22).setInteractive({ useHandCursor: true });
+    btn.on('pointerdown', () => {
+      for (const obj of [dim, panel, title, text, btn]) obj.destroy();
+      this.refresh();
+      this.showEvents(events);
+    });
   }
 
   private refresh(): void {
