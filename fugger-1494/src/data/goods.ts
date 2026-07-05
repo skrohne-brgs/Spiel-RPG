@@ -6,6 +6,7 @@ export interface GoodDef {
 }
 
 export const GOODS: GoodDef[] = [
+  { id: 'erz', name: 'Erz', basePrice: 6, volatility: 0.08 },
   { id: 'salz', name: 'Salz', basePrice: 12, volatility: 0.10 },
   { id: 'wein', name: 'Wein', basePrice: 18, volatility: 0.15 },
   { id: 'wolle', name: 'Wolle', basePrice: 15, volatility: 0.12 },

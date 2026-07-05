@@ -1,12 +1,20 @@
 import { GOODS } from '../data/goods';
+import { getBuilding } from '../data/buildings';
 import type { GameState } from '../state';
 import type { GameEvent } from './events';
 
-// Firmenwert = Bargeld + Warenwert (zu Basispreisen bewertet).
+// Firmenwert = Bargeld + Warenwert + Manufakturen samt Lagerbestand
+// (Waren zu Basispreisen bewertet).
 export function companyValue(s: GameState): number {
   let value = s.gold;
   for (const good of GOODS) {
     value += (s.cargo[good.id] ?? 0) * good.basePrice;
+  }
+  for (const [id, b] of Object.entries(s.buildings)) {
+    const def = getBuilding(id);
+    const inputPrice = GOODS.find((g) => g.id === def.inputGood)!.basePrice;
+    const outputPrice = GOODS.find((g) => g.id === def.outputGood)!.basePrice;
+    value += def.cost + b.input * inputPrice + b.output * outputPrice;
   }
   return Math.round(value);
 }

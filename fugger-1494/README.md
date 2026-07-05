@@ -31,8 +31,18 @@ npm run build    # erzeugt dist/index.html als einzelne Datei
 - [x] Hauptmenü (Neues Spiel / Weiterspielen)
 - [x] Speichern/Laden (automatisch jeden Monat, localStorage)
 - [x] Ereignisse: Raubritter & Wegzoll beim Reisen, Knappheit/Schwemme auf Märkten
-- [ ] Kartengrafik als Bilddatei statt Platzhalter
-- [ ] Siegbedingung / Punktestand (Firmenwert)
+- [x] Kartengrafik als Bilddatei (stilisierte Antik-Europakarte, Quelle: assets-src/map.svg)
+- [x] Firmenwert im HUD (Gold + Waren + Manufakturen)
+- [x] Historische Meilensteine: Reichstag zu Worms 1495 (Landfriede senkt Räuberrisiko),
+      Seeweg nach Indien 1499 (Gewürzpreissturz in Lissabon), Vermögensränge (1.000/5.000/25.000 fl.)
+
+## Stand (Phase 2 – Produktionsketten, begonnen)
+
+- [x] Neue Ware Erz (billig in Innsbruck und Krakau)
+- [x] Kaufbare Manufakturen mit Kontor-Ansicht (einlagern/abholen):
+      Tuchweberei Augsburg (Wolle → Tuch), Schmelzhütte Innsbruck (2 Erz → 1 Kupfer)
+- [x] Monatliche Produktion beim Rundenende
+- [ ] Weitere Manufakturen und Waren, Lagerkapazitäten
 
 Danach: Produktionsketten (Phase 2), Bankwesen (Phase 3),
 Politik & Konkurrenz-KI (Phase 4) – Details im Konzeptplan.

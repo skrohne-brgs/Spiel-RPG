@@ -1,5 +1,11 @@
 import { START_GOLD, START_YEAR, START_MONTH, MONTH_NAMES } from './constants';
 import { MarketState, createMarket, advanceMarket } from './sim/market';
+import { getBuilding } from './data/buildings';
+
+export interface BuildingState {
+  input: number; // eingelagerter Rohstoff
+  output: number; // fertige, abholbare Ware
+}
 
 export interface GameState {
   gold: number;
@@ -10,6 +16,7 @@ export interface GameState {
   market: MarketState;
   milestones: string[]; // bereits ausgelöste Meilenstein-IDs
   flags: Record<string, boolean>; // dauerhafte Effekte (z.B. Landfriede)
+  buildings: Record<string, BuildingState>; // gekaufte Manufakturen
 }
 
 const SAVE_KEY = 'fugger1494-save';
@@ -26,6 +33,7 @@ export function newGame(): GameState {
     market: createMarket(),
     milestones: [],
     flags: {},
+    buildings: {},
   };
   saveGame();
   return state;
@@ -61,6 +69,7 @@ export function loadGame(): GameState | null {
     // Ältere Spielstände um neue Felder ergänzen.
     state.milestones ??= [];
     state.flags ??= {};
+    state.buildings ??= {};
     return state;
   } catch {
     return null;
@@ -83,5 +92,16 @@ export function endTurn(s: GameState): void {
     s.year += 1;
   }
   advanceMarket(s.market);
+  produce(s);
   saveGame();
+}
+
+// Manufakturen veredeln eingelagerte Rohstoffe.
+function produce(s: GameState): void {
+  for (const [id, b] of Object.entries(s.buildings)) {
+    const def = getBuilding(id);
+    const units = Math.min(def.ratePerMonth, Math.floor(b.input / def.inputPerOutput));
+    b.input -= units * def.inputPerOutput;
+    b.output += units;
+  }
 }

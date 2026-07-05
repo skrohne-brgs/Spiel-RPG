@@ -21,7 +21,7 @@ export const CITIES: CityDef[] = [
     name: 'Innsbruck',
     x: 640, y: 460,
     connections: ['augsburg', 'venedig'],
-    priceMod: { silber: 0.6, kupfer: 0.65, wein: 1.2, tuch: 1.2 },
+    priceMod: { silber: 0.6, kupfer: 0.65, erz: 0.7, wein: 1.2, tuch: 1.2 },
   },
   {
     id: 'venedig',
@@ -49,7 +49,7 @@ export const CITIES: CityDef[] = [
     name: 'Krakau',
     x: 880, y: 300,
     connections: ['wien'],
-    priceMod: { salz: 0.65, kupfer: 0.8, tuch: 1.3, wein: 1.25 },
+    priceMod: { salz: 0.65, kupfer: 0.8, erz: 0.7, tuch: 1.3, wein: 1.25 },
   },
   {
     id: 'antwerpen',

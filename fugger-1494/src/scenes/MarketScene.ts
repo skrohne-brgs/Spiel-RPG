@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { GOODS } from '../data/goods';
 import { getCity } from '../data/cities';
 import { getPrice } from '../sim/market';
+import { buildingForCity } from '../data/buildings';
 import { getState, cargoTotal, dateLabel } from '../state';
 
 // Marktmenü der aktuellen Stadt: kaufen/verkaufen pro Ware.
@@ -43,7 +44,14 @@ export class MarketScene extends Phaser.Scene {
       this.makeButton(900, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1));
     }
 
-    this.makeButton(GAME_WIDTH / 2 - 70, GAME_HEIGHT - 90, 'Zur Karte', () => this.scene.start('MapScene'));
+    const def = buildingForCity(getState().cityId);
+    if (def) {
+      const label = getState().buildings[def.id] ? `Kontor: ${def.name}` : `Kontor: ${def.name} kaufbar`;
+      this.makeButton(GAME_WIDTH / 2 - 280, GAME_HEIGHT - 90, label, () => this.scene.start('KontorScene'));
+      this.makeButton(GAME_WIDTH / 2 + 120, GAME_HEIGHT - 90, 'Zur Karte', () => this.scene.start('MapScene'));
+    } else {
+      this.makeButton(GAME_WIDTH / 2 - 70, GAME_HEIGHT - 90, 'Zur Karte', () => this.scene.start('MapScene'));
+    }
     this.refresh();
   }
 
