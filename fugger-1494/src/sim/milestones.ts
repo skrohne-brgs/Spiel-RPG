@@ -1,20 +1,26 @@
-import { GOODS } from '../data/goods';
+import { getGood } from '../data/goods';
 import { getBuilding } from '../data/buildings';
+import {
+  WAREHOUSE_COST, WAREHOUSE_STEP, WAREHOUSE_UPGRADE_COST, WAGON_COST,
+} from '../constants';
+import { stockValue } from '../state';
 import type { GameState } from '../state';
 import type { GameEvent } from './events';
 
-// Firmenwert = Bargeld + Warenwert + Manufakturen samt Lagerbestand
-// (Waren zu Basispreisen bewertet).
+// Firmenwert = Bargeld + alle Waren (Wagen, Lager, Manufakturen, Fuhrwerke)
+// zu Basispreisen + Kaufwert von Manufakturen, Lagern und Fuhrwerken.
 export function companyValue(s: GameState): number {
-  let value = s.gold;
-  for (const good of GOODS) {
-    value += (s.cargo[good.id] ?? 0) * good.basePrice;
-  }
+  let value = s.gold + stockValue(s.cargo);
   for (const [id, b] of Object.entries(s.buildings)) {
     const def = getBuilding(id);
-    const inputPrice = GOODS.find((g) => g.id === def.inputGood)!.basePrice;
-    const outputPrice = GOODS.find((g) => g.id === def.outputGood)!.basePrice;
-    value += def.cost + b.input * inputPrice + b.output * outputPrice;
+    value += def.cost + b.output * getGood(def.outputGood).basePrice + stockValue(b.input);
+  }
+  for (const w of Object.values(s.warehouses)) {
+    const steps = w.capacity / WAREHOUSE_STEP;
+    value += WAREHOUSE_COST + (steps - 1) * WAREHOUSE_UPGRADE_COST + stockValue(w.stock);
+  }
+  for (const w of s.wagons) {
+    value += WAGON_COST + stockValue(w.cargo);
   }
   return Math.round(value);
 }

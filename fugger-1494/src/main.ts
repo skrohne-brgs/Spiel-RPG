@@ -4,6 +4,8 @@ import { MainMenuScene } from './scenes/MainMenuScene';
 import { MapScene } from './scenes/MapScene';
 import { MarketScene } from './scenes/MarketScene';
 import { KontorScene } from './scenes/KontorScene';
+import { LagerScene } from './scenes/LagerScene';
+import { FuhrparkScene } from './scenes/FuhrparkScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -11,7 +13,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: GAME_HEIGHT,
   backgroundColor: '#1a1408',
   parent: 'game-container',
-  scene: [MainMenuScene, MapScene, MarketScene, KontorScene],
+  scene: [MainMenuScene, MapScene, MarketScene, KontorScene, LagerScene, FuhrparkScene],
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
 };
 

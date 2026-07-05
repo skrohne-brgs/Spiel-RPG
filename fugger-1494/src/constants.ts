@@ -3,6 +3,17 @@ export const GAME_HEIGHT = 720;
 
 export const START_GOLD = 500;
 export const WAGON_CAPACITY = 20;
+
+// Lager
+export const WAREHOUSE_COST = 500;
+export const WAREHOUSE_STEP = 30; // Kapazität pro Ausbaustufe
+export const WAREHOUSE_UPGRADE_COST = 300;
+export const WAREHOUSE_UPKEEP_PER_STEP = 5; // fl./Monat je Ausbaustufe
+
+// Personal & Fuhrpark
+export const MANAGER_WAGE = 25; // fl./Monat
+export const WAGON_COST = 300;
+export const CARTER_WAGE = 20; // Fuhrmann, fl./Monat (nur mit Route)
 export const START_YEAR = 1494;
 export const START_MONTH = 0; // Januar
 

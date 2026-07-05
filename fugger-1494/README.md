@@ -36,13 +36,28 @@ npm run build    # erzeugt dist/index.html als einzelne Datei
 - [x] Historische Meilensteine: Reichstag zu Worms 1495 (Landfriede senkt Räuberrisiko),
       Seeweg nach Indien 1499 (Gewürzpreissturz in Lissabon), Vermögensränge (1.000/5.000/25.000 fl.)
 
-## Stand (Phase 2 – Produktionsketten, begonnen)
+## Stand (Phase 2 – Produktionsketten & Logistik)
 
-- [x] Neue Ware Erz (billig in Innsbruck und Krakau)
-- [x] Kaufbare Manufakturen mit Kontor-Ansicht (einlagern/abholen):
-      Tuchweberei Augsburg (Wolle → Tuch), Schmelzhütte Innsbruck (2 Erz → 1 Kupfer)
-- [x] Monatliche Produktion beim Rundenende
-- [ ] Weitere Manufakturen und Waren, Lagerkapazitäten
+Der Spieler ist immer „vor Ort": Interagieren (Handeln, Kaufen, Aufträge
+erteilen) geht nur in der aktuellen Stadt. Anderswo arbeiten nur Manager
+und Fuhrleute, die vorher Aufträge bekommen haben.
+
+- [x] 13 Waren, Manufakturen in drei Stufen (eine je Stadt):
+      *Stufe 1 (Förderung)*: Salzbergwerk Krakau;
+      *Stufe 2 (Veredelung)*: Tuchweberei Augsburg (Wolle→Tuch), Schmelzhütte
+      Innsbruck (2 Erz→Kupfer), Glashütte Venedig (2 Salz→Glas), Brennerei Wien
+      (2 Wein→Branntwein), Waffenschmiede Antwerpen (Kupfer→Waffen);
+      *Stufe 3 (Kombination)*: Goldschmiede Rom (Silber + 2 Glas→Schmuck),
+      Hof-Apotheke Lissabon (Gewürze + Branntwein→Arznei)
+- [x] Stadtlager: kaufbar (500 fl., 30 Kapazität), ausbaubar (+30 je 300 fl.),
+      Waren zwischen Wagen und Lager verschieben
+- [x] Unterhalt & Löhne: Manufakturen, Lager (5 fl. je Ausbaustufe),
+      Manager (25 fl.), Fuhrleute (20 fl.) – monatlich fällig, Schulden möglich
+- [x] Manager je Stadt: bestückt die Manufaktur automatisch aus dem Stadtlager
+      und räumt Fertigware dorthin zurück
+- [x] Fuhrpark: bis zu 4 zusätzliche Fuhrwerke, pendeln mit Hin-/Rückfracht
+      selbständig zwischen zwei verbundenen Städten mit eigenem Lager
+- [ ] Manager-Handelsaufträge (autonomes Kaufen/Verkaufen am Stadtmarkt)
 
 Danach: Produktionsketten (Phase 2), Bankwesen (Phase 3),
 Politik & Konkurrenz-KI (Phase 4) – Details im Konzeptplan.

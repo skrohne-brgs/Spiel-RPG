@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { CITIES, getCity } from '../data/cities';
-import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame } from '../state';
+import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame, monthlyUpkeep } from '../state';
 import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 import { companyValue, checkMilestones } from '../sim/milestones';
 import mapPng from '../assets/map.png';
@@ -107,8 +107,7 @@ export class MapScene extends Phaser.Scene {
   // Ein Monat vergeht (Reise oder Warten); danach werden Ereignisse gewürfelt.
   private passMonth(traveled: boolean): void {
     const s = getState();
-    endTurn(s);
-    const events: GameEvent[] = [];
+    const events: GameEvent[] = endTurn(s);
     if (traveled) {
       const e = rollTravelEvent(s);
       if (e) events.push(e);
@@ -154,7 +153,9 @@ export class MapScene extends Phaser.Scene {
     this.playerMarker.setPosition(city.x, city.y - 20);
     this.hudDate.setText(dateLabel(s));
     this.hudGold.setText(`${s.gold} Gulden`);
-    this.hudValue.setText(`Firmenwert: ${companyValue(s)} fl.`);
+    this.hudGold.setColor(s.gold < 0 ? '#d9534f' : '#c9a227');
+    const upkeep = monthlyUpkeep(s);
+    this.hudValue.setText(`Firmenwert: ${companyValue(s)} fl.${upkeep > 0 ? ` · Unterhalt: ${upkeep} fl./Mon.` : ''}`);
     this.hudCargo.setText(`Fracht: ${cargoTotal(s)}/${WAGON_CAPACITY} – in ${city.name} (Klick: Markt)`);
   }
 }

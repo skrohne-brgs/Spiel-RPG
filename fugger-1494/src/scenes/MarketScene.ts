@@ -20,46 +20,46 @@ export class MarketScene extends Phaser.Scene {
     this.priceCells = [];
     this.cargoCells = [];
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 160, GAME_HEIGHT - 100, COLORS.parchment)
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 160, GAME_HEIGHT - 60, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 
-    this.header = this.add.text(GAME_WIDTH / 2, 80, '', {
-      fontFamily: 'Georgia, serif', fontSize: '28px', color: '#3a2a14',
+    this.header = this.add.text(GAME_WIDTH / 2, 68, '', {
+      fontFamily: 'Georgia, serif', fontSize: '26px', color: '#3a2a14',
     }).setOrigin(0.5, 0);
 
     const colStyle = {
-      fontFamily: 'Georgia, serif', fontSize: '20px', color: '#3a2a14',
+      fontFamily: 'Georgia, serif', fontSize: '17px', color: '#3a2a14',
     };
-    this.add.text(180, 140, 'Ware', colStyle);
-    this.add.text(380, 140, 'Preis', colStyle);
-    this.add.text(520, 140, 'Im Wagen', colStyle);
-    this.add.text(700, 140, 'Handeln', colStyle);
+    this.add.text(180, 126, 'Ware', colStyle);
+    this.add.text(380, 126, 'Preis', colStyle);
+    this.add.text(520, 126, 'Im Wagen', colStyle);
+    this.add.text(700, 126, 'Handeln', colStyle);
 
     for (let i = 0; i < GOODS.length; i++) {
-      const y = 190 + i * 52;
+      const y = 158 + i * 36;
       this.add.text(180, y, GOODS[i].name, colStyle);
       this.priceCells.push(this.add.text(440, y, '', colStyle).setOrigin(1, 0));
       this.cargoCells.push(this.add.text(580, y, '', colStyle).setOrigin(1, 0));
       this.makeButton(720, y, '− Verkaufen', () => this.trade(GOODS[i].id, -1));
-      this.makeButton(900, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1));
+      this.makeButton(880, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1));
     }
 
     const def = buildingForCity(getState().cityId);
-    if (def) {
-      const label = getState().buildings[def.id] ? `Kontor: ${def.name}` : `Kontor: ${def.name} kaufbar`;
-      this.makeButton(GAME_WIDTH / 2 - 280, GAME_HEIGHT - 90, label, () => this.scene.start('KontorScene'));
-      this.makeButton(GAME_WIDTH / 2 + 120, GAME_HEIGHT - 90, 'Zur Karte', () => this.scene.start('MapScene'));
-    } else {
-      this.makeButton(GAME_WIDTH / 2 - 70, GAME_HEIGHT - 90, 'Zur Karte', () => this.scene.start('MapScene'));
-    }
+    const kontorLabel = def
+      ? (getState().buildings[def.id] ? `Kontor: ${def.name}` : `Kontor: ${def.name} kaufbar`)
+      : 'Kontor';
+    this.makeButton(200, GAME_HEIGHT - 62, kontorLabel, () => this.scene.start('KontorScene'));
+    this.makeButton(620, GAME_HEIGHT - 62, 'Lager', () => this.scene.start('LagerScene'));
+    this.makeButton(780, GAME_HEIGHT - 62, 'Fuhrpark', () => this.scene.start('FuhrparkScene'));
+    this.makeButton(980, GAME_HEIGHT - 62, 'Zur Karte', () => this.scene.start('MapScene'));
     this.refresh();
   }
 
   private makeButton(x: number, y: number, label: string, onClick: () => void): void {
     const btn = this.add.text(x, y, label, {
-      fontFamily: 'Georgia, serif', fontSize: '20px',
+      fontFamily: 'Georgia, serif', fontSize: '17px',
       color: '#e8d9b0', backgroundColor: '#6b5636',
-      padding: { x: 12, y: 4 },
+      padding: { x: 10, y: 3 },
     }).setInteractive({ useHandCursor: true });
     btn.on('pointerover', () => btn.setBackgroundColor('#8a2f1f'));
     btn.on('pointerout', () => btn.setBackgroundColor('#6b5636'));
