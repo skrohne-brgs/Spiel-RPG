@@ -147,7 +147,10 @@ export class KontorScene extends Phaser.Scene {
       ` (im Wagen: ${s.cargo[i.good] ?? 0})`,
     );
     const hired = s.managers[s.cityId] === true;
-    const managerLine = hired
+    const spouseRuns = hired && s.cityId === 'augsburg' && s.family.spouse;
+    const managerLine = spouseRuns
+      ? `${s.family.spouse} führt das Kontor persönlich –\nohne Lohn, mit dem Auge der Familie.`
+      : hired
       ? 'Manager: angestellt – bestückt die Manufaktur aus dem Stadtlager\nund räumt Fertigware dorthin zurück.'
       : 'Kein Manager: Du musst selbst einlagern und abholen.' +
         (s.warehouses[s.cityId] ? '' : '\n(Ein Manager braucht zudem ein Lager in dieser Stadt.)');

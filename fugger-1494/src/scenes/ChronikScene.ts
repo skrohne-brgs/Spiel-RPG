@@ -41,6 +41,24 @@ export class ChronikScene extends Phaser.Scene {
       fontFamily: 'Georgia, serif', fontSize: '16px', color: '#6b5636',
     });
 
+    // Familie (rechte Spalte, unten)
+    this.add.text(920, 330, 'Familie', {
+      fontFamily: 'Georgia, serif', fontSize: '19px', color: '#3a2a14', fontStyle: 'bold',
+    });
+    const f = s.family;
+    const familyText = f.spouse
+      ? `Vermählt mit ${f.spouse}.` +
+        (f.children.length > 0
+          ? `\nKinder: ${f.children.join(', ')}.`
+          : '\nNoch keine Kinder.')
+      : f.courting
+        ? `Du wirbst um ${f.courting.name} …`
+        : 'Unvermählt. Wer das Haus mehrt,\ndem begegnet das Glück.';
+    this.add.text(920, 362, familyText, {
+      fontFamily: 'Georgia, serif', fontSize: '15px', color: '#6b5636',
+      wordWrap: { width: 300 }, lineSpacing: 4,
+    });
+
     MILESTONES.forEach((m, i) => {
       const y = 110 + i * 52;
       const reached = s.milestones.includes(m.id);

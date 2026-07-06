@@ -8,6 +8,7 @@ import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
 import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
 import { Rival, createRivals, runRivals } from './sim/politics';
+import { FamilyState, createFamily, checkFamily } from './sim/family';
 
 export interface BuildingState {
   input: Record<string, number>; // eingelagerte Rohstoffe je Ware
@@ -67,6 +68,7 @@ export interface GameState {
   reputation: number; // Ansehen bei Fürsten und Zünften (0..100)
   privileges: string[]; // erworbene Privilegien
   rivals: Rival[]; // konkurrierende Handelshäuser
+  family: FamilyState; // Nebenschauplatz: Ehe und Kinder
 }
 
 const SAVE_KEY = 'fugger1494-save';
@@ -94,6 +96,7 @@ export function newGame(): GameState {
     reputation: 10,
     privileges: [],
     rivals: createRivals(),
+    family: createFamily(),
   };
   saveGame();
   return state;
@@ -147,6 +150,7 @@ export function loadGame(): GameState | null {
     state.reputation ??= 10;
     state.privileges ??= [];
     state.rivals ??= createRivals();
+    state.family ??= createFamily();
     return state;
   } catch {
     return null;
@@ -176,7 +180,9 @@ export function monthlyUpkeep(s: GameState): number {
   for (const w of Object.values(s.warehouses)) {
     sum += (w.capacity / WAREHOUSE_STEP) * WAREHOUSE_UPKEEP_PER_STEP;
   }
-  sum += Object.values(s.managers).filter(Boolean).length * MANAGER_WAGE;
+  sum += Object.entries(s.managers)
+    .filter(([cityId, hired]) => hired && !(cityId === 'augsburg' && s.family.spouse))
+    .length * MANAGER_WAGE;
   sum += s.wagons.filter((w) => w.route).length * CARTER_WAGE;
   return sum;
 }
@@ -196,6 +202,7 @@ export function endTurn(s: GameState): GameEvent[] {
   const events: GameEvent[] = [];
   events.push(...processBank(s));
   events.push(...runRivals(s));
+  events.push(...checkFamily(s));
   const upkeep = monthlyUpkeep(s);
   const wasSolvent = s.gold >= 0;
   s.gold -= upkeep;
