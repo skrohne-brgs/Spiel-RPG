@@ -49,9 +49,10 @@ export class MarketScene extends Phaser.Scene {
       ? (getState().buildings[def.id] ? `Kontor: ${def.name}` : `Kontor: ${def.name} kaufbar`)
       : 'Kontor';
     this.makeButton(200, GAME_HEIGHT - 62, kontorLabel, () => this.scene.start('KontorScene'));
-    this.makeButton(620, GAME_HEIGHT - 62, 'Lager', () => this.scene.start('LagerScene'));
-    this.makeButton(780, GAME_HEIGHT - 62, 'Fuhrpark', () => this.scene.start('FuhrparkScene'));
-    this.makeButton(980, GAME_HEIGHT - 62, 'Zur Karte', () => this.scene.start('MapScene'));
+    this.makeButton(540, GAME_HEIGHT - 62, 'Lager', () => this.scene.start('LagerScene'));
+    this.makeButton(660, GAME_HEIGHT - 62, 'Fuhrpark', () => this.scene.start('FuhrparkScene'));
+    this.makeButton(810, GAME_HEIGHT - 62, 'Bank', () => this.scene.start('BankScene'));
+    this.makeButton(950, GAME_HEIGHT - 62, 'Zur Karte', () => this.scene.start('MapScene'));
     this.refresh();
   }
 

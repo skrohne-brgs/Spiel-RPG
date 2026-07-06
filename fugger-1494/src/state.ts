@@ -6,6 +6,7 @@ import { MarketState, createMarket, advanceMarket, getPrice } from './sim/market
 import { getBuilding, buildingForCity } from './data/buildings';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
+import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
 
 export interface BuildingState {
   input: Record<string, number>; // eingelagerte Rohstoffe je Ware
@@ -59,6 +60,9 @@ export interface GameState {
   managers: Record<string, boolean>; // Manager je Stadt
   managerOrders: Record<string, ManagerOrders>; // Handelsaufträge je Stadt
   wagons: WagonState[]; // zusätzliche Fuhrwerke (Spielerwagen ist s.cargo)
+  loans: GivenLoan[]; // an Fürsten vergebene Kredite
+  bankOffers: LoanOffer[]; // aktuelle Kreditgesuche (monatlich neu)
+  debt: number; // eigenes Darlehen bei der Wechselstube
 }
 
 const SAVE_KEY = 'fugger1494-save';
@@ -80,6 +84,9 @@ export function newGame(): GameState {
     managers: {},
     managerOrders: {},
     wagons: [],
+    loans: [],
+    bankOffers: rollOffers(START_GOLD),
+    debt: 0,
   };
   saveGame();
   return state;
@@ -127,6 +134,9 @@ export function loadGame(): GameState | null {
     state.managers ??= {};
     state.managerOrders ??= {};
     state.wagons ??= [];
+    state.loans ??= [];
+    state.bankOffers ??= [];
+    state.debt ??= 0;
     return state;
   } catch {
     return null;
@@ -174,6 +184,7 @@ export function endTurn(s: GameState): GameEvent[] {
   runWagons(s);
 
   const events: GameEvent[] = [];
+  events.push(...processBank(s));
   const upkeep = monthlyUpkeep(s);
   const wasSolvent = s.gold >= 0;
   s.gold -= upkeep;
@@ -183,6 +194,7 @@ export function endTurn(s: GameState): GameEvent[] {
       text: `Unterhalt und Löhne (${upkeep} fl.) übersteigen dein Vermögen.\nDu machst Schulden – verkaufe Waren, um wieder\nflüssig zu werden.`,
     });
   }
+  s.bankOffers = rollOffers(Math.max(0, s.gold));
   saveGame();
   return events;
 }

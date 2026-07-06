@@ -22,6 +22,8 @@ export function companyValue(s: GameState): number {
   for (const w of s.wagons) {
     value += WAGON_COST + stockValue(w.cargo);
   }
+  for (const loan of s.loans) value += loan.amount;
+  value -= s.debt;
   return Math.round(value);
 }
 
@@ -57,6 +59,14 @@ const MILESTONES: Milestone[] = [
     },
     apply: (s) => {
       s.market['lissabon']['gewuerze'] = 0.4;
+    },
+  },
+  {
+    id: 'kredit1',
+    when: (s) => s.flags.kreditVergeben === true,
+    event: {
+      title: 'Bankier der Fürsten',
+      text: 'Zum ersten Mal leiht dein Haus einem Fürsten Geld.\nWer den Mächtigen Kredit gibt, dem öffnen sich Türen –\nund wer weiß, was sie eines Tages als Pfand bieten.',
     },
   },
   {

@@ -57,7 +57,20 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
       und räumt Fertigware dorthin zurück
 - [x] Fuhrpark: bis zu 4 zusätzliche Fuhrwerke, pendeln mit Hin-/Rückfracht
       selbständig zwischen zwei verbundenen Städten mit eigenem Lager
-- [ ] Manager-Handelsaufträge (autonomes Kaufen/Verkaufen am Stadtmarkt)
+- [x] Manager-Handelsaufträge: je Stadt ein Einkaufs- und ein Verkaufsauftrag
+      (Ware, Preislimit, Menge/Monat) – läuft monatlich über Stadtlager und Kasse;
+      Manager sind auch ohne Manufaktur anstellbar (reine Handelsposten)
+
+## Stand (Phase 3 – Bankwesen, begonnen)
+
+- [x] Wechselstube in jeder Stadt: monatlich 0–2 Kreditgesuche von Fürsten
+      (Betrag, Laufzeit, Rückzahlung, Ausfallrisiko gering/mittel/hoch)
+- [x] Vergebene Kredite laufen im Hintergrund; bei Fälligkeit Rückzahlung
+      mit Zinsgewinn oder Ausfall-Ereignis (Totalverlust)
+- [x] Eigenes Darlehen: in 500-fl.-Schritten bis 3.000 fl., 2 % Zins/Monat,
+      jederzeit tilgbar; Schulden mindern den Firmenwert
+- [x] Meilenstein „Bankier der Fürsten" beim ersten vergebenen Kredit
+- [ ] Kaiserkredit & Privilegien (Monopole, Zollfreiheit) – Übergang zu Phase 4
 
 Danach: Produktionsketten (Phase 2), Bankwesen (Phase 3),
 Politik & Konkurrenz-KI (Phase 4) – Details im Konzeptplan.
