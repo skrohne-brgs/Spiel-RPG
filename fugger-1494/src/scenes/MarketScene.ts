@@ -2,9 +2,10 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { GOODS } from '../data/goods';
 import { getCity } from '../data/cities';
-import { getPrice } from '../sim/market';
+import { getPrice, applyTradeImpact } from '../sim/market';
+import { sfxCoins } from '../audio/sfx';
 import { buildingForCity } from '../data/buildings';
-import { getState, cargoTotal, dateLabel } from '../state';
+import { getState, cargoTotal, dateLabel, saveGame } from '../state';
 
 // Marktmenü der aktuellen Stadt: kaufen/verkaufen pro Ware.
 export class MarketScene extends Phaser.Scene {
@@ -80,6 +81,9 @@ export class MarketScene extends Phaser.Scene {
       s.gold += price;
       s.cargo[goodId] = held - 1;
     }
+    applyTradeImpact(s.market, s.cityId, goodId, 1, dir > 0 ? 'buy' : 'sell');
+    sfxCoins();
+    saveGame();
     this.refresh();
   }
 

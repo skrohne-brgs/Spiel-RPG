@@ -2,7 +2,7 @@ import {
   START_GOLD, START_YEAR, START_MONTH, MONTH_NAMES, WAGON_CAPACITY,
   WAREHOUSE_STEP, WAREHOUSE_UPKEEP_PER_STEP, MANAGER_WAGE, CARTER_WAGE,
 } from './constants';
-import { MarketState, createMarket, advanceMarket, getPrice } from './sim/market';
+import { MarketState, createMarket, advanceMarket, getPrice, applyTradeImpact } from './sim/market';
 import { getBuilding, buildingForCity } from './data/buildings';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
@@ -242,6 +242,7 @@ function runManagers(s: GameState): void {
         const n = Math.min(qty, wh.stock[goodId] ?? 0);
         wh.stock[goodId] = (wh.stock[goodId] ?? 0) - n;
         s.gold += n * price;
+        if (n > 0) applyTradeImpact(s.market, cityId, goodId, n, 'sell');
       }
     }
     if (orders?.buy) {
@@ -252,6 +253,7 @@ function runManagers(s: GameState): void {
         const n = Math.min(qty, space2, Math.floor(s.gold / price));
         wh.stock[goodId] = (wh.stock[goodId] ?? 0) + n;
         s.gold -= n * price;
+        if (n > 0) applyTradeImpact(s.market, cityId, goodId, n, 'buy');
       }
     }
 

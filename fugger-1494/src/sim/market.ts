@@ -28,6 +28,16 @@ export function advanceMarket(state: MarketState): void {
   }
 }
 
+// Eigener Handel bewegt den Markt: Kaeufe verteuern, Verkaeufe druecken den
+// Preis. Verhindert, dass man unbegrenzt zum selben Kurs handeln kann.
+export function applyTradeImpact(
+  state: MarketState, cityId: string, goodId: string,
+  units: number, dir: 'buy' | 'sell',
+): void {
+  const perUnit = dir === 'buy' ? 1.012 : 0.988;
+  state[cityId][goodId] = Math.min(2, Math.max(0.4, state[cityId][goodId] * perUnit ** units));
+}
+
 export function getPrice(state: MarketState, cityId: string, goodId: string): number {
   const good = GOODS.find((g) => g.id === goodId)!;
   const city = CITIES.find((c) => c.id === cityId)!;

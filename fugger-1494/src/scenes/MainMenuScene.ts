@@ -1,14 +1,20 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { newGame, loadGame, hasSave } from '../state';
+import mapPng from '../assets/map.png';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
     super('MainMenuScene');
   }
 
+  preload(): void {
+    if (!this.textures.exists('map')) this.load.image('map', mapPng);
+  }
+
   create(): void {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'map').setAlpha(0.35);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 640, 460, COLORS.parchment)
       .setStrokeStyle(5, COLORS.gold);
 

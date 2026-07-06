@@ -100,6 +100,12 @@ src/
 - **Phase 4 – Politik & Konkurrenz**: Zünfte, Privilegien, KI-Handelshäuser,
   Reputationssystem, Kaiserwahl-Event.
 - **Phase 5 – Polish**: Balancing, Art/Sound, Achievements/Endzustände.
+- **Phase 6 – Familie (Nebenschauplatz)**: Werben um eine Partnerin/einen
+  Partner und Aufbau einer Familie – bewusst klein gehalten: gelegentliche
+  Ereignisse (Begegnung, Brautwerbung, Hochzeit, Kinder), kleine dauerhafte
+  Boni (z.B. Mitgift, Erbe als Nachfolger, Reputation) statt eigenem
+  Spielsystem. Historisches Vorbild: strategische Heiratspolitik der
+  Kaufmannsfamilien.
 
 ## 8. Risiken / offene Punkte
 

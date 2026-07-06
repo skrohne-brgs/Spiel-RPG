@@ -8,6 +8,7 @@ import { LagerScene } from './scenes/LagerScene';
 import { FuhrparkScene } from './scenes/FuhrparkScene';
 import { ManagerScene } from './scenes/ManagerScene';
 import { BankScene } from './scenes/BankScene';
+import { ChronikScene } from './scenes/ChronikScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -15,7 +16,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: GAME_HEIGHT,
   backgroundColor: '#1a1408',
   parent: 'game-container',
-  scene: [MainMenuScene, MapScene, MarketScene, KontorScene, LagerScene, FuhrparkScene, ManagerScene, BankScene],
+  scene: [MainMenuScene, MapScene, MarketScene, KontorScene, LagerScene, FuhrparkScene, ManagerScene, BankScene, ChronikScene],
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
 };
 

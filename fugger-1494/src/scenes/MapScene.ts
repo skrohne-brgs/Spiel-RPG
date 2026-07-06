@@ -2,9 +2,11 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { CITIES, getCity } from '../data/cities';
 import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame, monthlyUpkeep } from '../state';
+import { buildingForCity } from '../data/buildings';
 import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 import { companyValue, checkMilestones } from '../sim/milestones';
 import mapPng from '../assets/map.png';
+import { sfxEvent, sfxTravel } from '../audio/sfx';
 
 // Kartenübersicht: Europakarte (Bilddatei, Quelle: assets-src/map.svg)
 // mit Städten; Reisen kostet einen Monat.
@@ -15,13 +17,14 @@ export class MapScene extends Phaser.Scene {
   private hudCargo!: Phaser.GameObjects.Text;
   private playerMarker!: Phaser.GameObjects.Arc;
   private cityLabels: Phaser.GameObjects.Text[] = [];
+  private assetMarkers: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('MapScene');
   }
 
   preload(): void {
-    this.load.image('map', mapPng);
+    if (!this.textures.exists('map')) this.load.image('map', mapPng);
   }
 
   create(): void {
@@ -80,15 +83,47 @@ export class MapScene extends Phaser.Scene {
     const style = {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: COLORS.uiText,
     };
-    this.hudDate = this.add.text(24, 20, '', style).setDepth(11);
-    this.hudGold = this.add.text(220, 20, '', { ...style, color: COLORS.uiAccent }).setDepth(11);
-    this.hudValue = this.add.text(430, 20, '', { ...style, color: COLORS.uiDim }).setDepth(11);
-    this.hudCargo = this.add.text(680, 20, '', style).setDepth(11);
+    this.hudDate = this.add.text(24, 22, '', { ...style, fontSize: '18px' }).setDepth(11);
+    this.hudGold = this.add.text(200, 22, '', { ...style, fontSize: '18px', color: COLORS.uiAccent }).setDepth(11);
+    this.hudValue = this.add.text(390, 22, '', { ...style, fontSize: '18px', color: COLORS.uiDim }).setDepth(11);
+    this.hudCargo = this.add.text(740, 22, '', { ...style, fontSize: '18px' }).setDepth(11);
 
     const wait = this.add.text(GAME_WIDTH - 24, 20, '⌛ Monat warten', {
       ...style, color: COLORS.uiAccent,
     }).setOrigin(1, 0).setDepth(11).setInteractive({ useHandCursor: true });
     wait.on('pointerdown', () => this.passMonth(false));
+
+    const chronik = this.add.text(24, GAME_HEIGHT - 16, '📜 Chronik', {
+      fontFamily: 'Georgia, serif', fontSize: '18px', color: '#e8d9b0',
+      stroke: '#1a1408', strokeThickness: 3,
+    }).setOrigin(0, 1).setDepth(11).setInteractive({ useHandCursor: true });
+    chronik.on('pointerdown', () => this.scene.start('ChronikScene'));
+  }
+
+  // Kleine Marker an den Städten: Lager (goldenes Quadrat), Manufaktur
+  // (braunes Dreieck), Manager (blauer Punkt).
+  private drawAssetMarkers(): void {
+    for (const m of this.assetMarkers) m.destroy();
+    this.assetMarkers = [];
+    const s = getState();
+    for (const city of CITIES) {
+      let x = city.x - 22;
+      if (s.warehouses[city.id]) {
+        this.assetMarkers.push(this.add.rectangle(x, city.y - 12, 9, 9, COLORS.gold)
+          .setStrokeStyle(1, COLORS.ink));
+        x -= 13;
+      }
+      const def = buildingForCity(city.id);
+      if (def && s.buildings[def.id]) {
+        this.assetMarkers.push(this.add.triangle(x, city.y - 12, 0, 9, 5, 0, 10, 9, 0x6b5636)
+          .setStrokeStyle(1, COLORS.ink));
+        x -= 13;
+      }
+      if (s.managers[city.id]) {
+        this.assetMarkers.push(this.add.circle(x, city.y - 12, 4, COLORS.player)
+          .setStrokeStyle(1, 0xffffff));
+      }
+    }
   }
 
   private onCityClicked(cityId: string): void {
@@ -100,6 +135,7 @@ export class MapScene extends Phaser.Scene {
     const here = getCity(s.cityId);
     if (here.connections.includes(cityId)) {
       s.cityId = cityId;
+      sfxTravel();
       this.passMonth(true);
     }
   }
@@ -123,6 +159,7 @@ export class MapScene extends Phaser.Scene {
   private showEvents(events: GameEvent[]): void {
     const event = events.shift();
     if (!event) return;
+    sfxEvent();
     const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.5)
       .setDepth(20).setInteractive();
     const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 560, 280, COLORS.parchment)
@@ -151,11 +188,12 @@ export class MapScene extends Phaser.Scene {
     const s = getState();
     const city = getCity(s.cityId);
     this.playerMarker.setPosition(city.x, city.y - 20);
+    this.drawAssetMarkers();
     this.hudDate.setText(dateLabel(s));
     this.hudGold.setText(`${s.gold} Gulden`);
     this.hudGold.setColor(s.gold < 0 ? '#d9534f' : '#c9a227');
     const upkeep = monthlyUpkeep(s);
-    this.hudValue.setText(`Firmenwert: ${companyValue(s)} fl.${upkeep > 0 ? ` · Unterhalt: ${upkeep} fl./Mon.` : ''}`);
-    this.hudCargo.setText(`Fracht: ${cargoTotal(s)}/${WAGON_CAPACITY} – in ${city.name} (Klick: Markt)`);
+    this.hudValue.setText(`Wert: ${companyValue(s)} fl.${upkeep > 0 ? ` · Kosten: ${upkeep}/Mon.` : ''}`);
+    this.hudCargo.setText(`Fracht ${cargoTotal(s)}/${WAGON_CAPACITY} – in ${city.name} (Klick: Markt)`);
   }
 }

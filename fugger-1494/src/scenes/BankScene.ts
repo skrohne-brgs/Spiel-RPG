@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { getCity } from '../data/cities';
 import { DEBT_RATE, DEBT_STEP, riskLabel } from '../sim/bank';
 import { getState, saveGame } from '../state';
+import { sfxCoins } from '../audio/sfx';
 
 const MAX_DEBT = 3000;
 
@@ -52,6 +53,7 @@ export class BankScene extends Phaser.Scene {
           });
           st.bankOffers.splice(st.bankOffers.indexOf(offer), 1);
           st.flags.kreditVergeben = true;
+          sfxCoins();
           saveGame();
           this.scene.restart();
         });
@@ -84,6 +86,7 @@ export class BankScene extends Phaser.Scene {
         if (st.debt + DEBT_STEP > MAX_DEBT) return;
         st.debt += DEBT_STEP;
         st.gold += DEBT_STEP;
+        sfxCoins();
         saveGame();
         this.scene.restart();
       });
@@ -95,6 +98,7 @@ export class BankScene extends Phaser.Scene {
         if (pay <= 0) return;
         st.gold -= pay;
         st.debt -= pay;
+        sfxCoins();
         saveGame();
         this.scene.restart();
       });

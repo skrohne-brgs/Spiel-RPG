@@ -72,5 +72,17 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
 - [x] Meilenstein „Bankier der Fürsten" beim ersten vergebenen Kredit
 - [ ] Kaiserkredit & Privilegien (Monopole, Zollfreiheit) – Übergang zu Phase 4
 
-Danach: Produktionsketten (Phase 2), Bankwesen (Phase 3),
-Politik & Konkurrenz-KI (Phase 4) – Details im Konzeptplan.
+## Stand (Phase 5 – Polish)
+
+- [x] Eigener Handel bewegt die Preise: Käufe verteuern (+1,2 %/Einheit),
+      Verkäufe drücken (−1,2 %/Einheit) – gilt auch für Manager-Aufträge
+- [x] Soundeffekte (synthetisch, WebAudio): Münzen, Reise, Ereignis-Glocke
+- [x] Besitz-Marker auf der Karte: Lager (goldenes Quadrat), Manufaktur
+      (Dreieck), Manager (blauer Punkt) an jeder Stadt
+- [x] Chronik-Ansicht (über die Karte): alle Meilensteine, erreichte mit Text
+- [x] Sieg bei 50.000 fl. Firmenwert („Das reichste Haus Europas") –
+      Sandbox läuft danach weiter
+- [x] Hauptmenü mit Kartenhintergrund
+
+Offen: Politik & Konkurrenz-KI (Phase 4), Familie als Nebenschauplatz
+(Phase 6) – Details im Konzeptplan.

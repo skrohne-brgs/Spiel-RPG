@@ -27,7 +27,7 @@ export function companyValue(s: GameState): number {
   return Math.round(value);
 }
 
-interface Milestone {
+export interface Milestone {
   id: string;
   when(s: GameState): boolean;
   event: GameEvent;
@@ -38,7 +38,7 @@ function dateReached(s: GameState, year: number, month: number): boolean {
   return s.year > year || (s.year === year && s.month >= month);
 }
 
-const MILESTONES: Milestone[] = [
+export const MILESTONES: Milestone[] = [
   {
     id: 'worms1495',
     when: (s) => dateReached(s, 1495, 7), // August 1495
@@ -91,6 +91,17 @@ const MILESTONES: Milestone[] = [
     event: {
       title: '„Der Reiche“',
       text: 'Dein Firmenwert übersteigt 25.000 Gulden.\nGanz Europa spricht von dir, wie einst\nvon Jakob Fugger dem Reichen.',
+    },
+  },
+  {
+    id: 'wert50000',
+    when: (s) => companyValue(s) >= 50000,
+    event: {
+      title: 'Das reichste Haus Europas',
+      text: 'Fünfzigtausend Gulden! Kein Handelshaus der\nChristenheit ist mächtiger als deines. Du hast\nerreicht, wovon Kaufleute nur träumen – das Spiel\nist gewonnen. Wie es weitergeht, entscheidest du.',
+    },
+    apply: (s) => {
+      s.flags.sieg = true;
     },
   },
 ];
