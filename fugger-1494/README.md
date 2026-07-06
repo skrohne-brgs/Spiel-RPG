@@ -83,6 +83,12 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
 - [x] Sieg bei 50.000 fl. Firmenwert („Das reichste Haus Europas") –
       Sandbox läuft danach weiter
 - [x] Hauptmenü mit Kartenhintergrund
+- [x] Eigene Vignette je Stadt (Augsburger Giebelhaus, Goldenes Dachl,
+      Campanile, Petersdom, Stephansdom, Wawel, Treppengiebel mit Kran,
+      Torre de Belém) – handgezeichnete SVGs, gerastert ohne externe Quellen
+      (Generator: assets-src/icons-generator.mjs)
+- [x] Besitz-Icons auf der Karte: Lagerhaus/Manufaktur (gemeinsames
+      Gebäude-Icon), Manager-Figur; Spieler als Planwagen
 
 ## Stand (Phase 4 – Politik & Konkurrenz)
 

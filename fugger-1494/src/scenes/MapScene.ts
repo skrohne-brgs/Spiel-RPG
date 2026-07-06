@@ -7,6 +7,23 @@ import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 import { companyValue, checkMilestones } from '../sim/milestones';
 import mapPng from '../assets/map.png';
 import { sfxEvent, sfxTravel } from '../audio/sfx';
+import augsburgPng from '../assets/cities/augsburg.png';
+import innsbruckPng from '../assets/cities/innsbruck.png';
+import venedigPng from '../assets/cities/venedig.png';
+import romPng from '../assets/cities/rom.png';
+import wienPng from '../assets/cities/wien.png';
+import krakauPng from '../assets/cities/krakau.png';
+import antwerpenPng from '../assets/cities/antwerpen.png';
+import lissabonPng from '../assets/cities/lissabon.png';
+import buildingPng from '../assets/icon_building.png';
+import managerPng from '../assets/icon_manager.png';
+import wagonPng from '../assets/icon_wagon.png';
+
+const CITY_ART: Record<string, string> = {
+  augsburg: augsburgPng, innsbruck: innsbruckPng, venedig: venedigPng,
+  rom: romPng, wien: wienPng, krakau: krakauPng,
+  antwerpen: antwerpenPng, lissabon: lissabonPng,
+};
 
 // Kartenübersicht: Europakarte (Bilddatei, Quelle: assets-src/map.svg)
 // mit Städten; Reisen kostet einen Monat.
@@ -15,7 +32,7 @@ export class MapScene extends Phaser.Scene {
   private hudValue!: Phaser.GameObjects.Text;
   private hudDate!: Phaser.GameObjects.Text;
   private hudCargo!: Phaser.GameObjects.Text;
-  private playerMarker!: Phaser.GameObjects.Arc;
+  private playerMarker!: Phaser.GameObjects.Image;
   private cityLabels: Phaser.GameObjects.Text[] = [];
   private assetMarkers: Phaser.GameObjects.GameObject[] = [];
 
@@ -25,6 +42,12 @@ export class MapScene extends Phaser.Scene {
 
   preload(): void {
     if (!this.textures.exists('map')) this.load.image('map', mapPng);
+    for (const [id, png] of Object.entries(CITY_ART)) {
+      if (!this.textures.exists(`city_${id}`)) this.load.image(`city_${id}`, png);
+    }
+    if (!this.textures.exists('icon_building')) this.load.image('icon_building', buildingPng);
+    if (!this.textures.exists('icon_manager')) this.load.image('icon_manager', managerPng);
+    if (!this.textures.exists('icon_wagon')) this.load.image('icon_wagon', wagonPng);
   }
 
   create(): void {
@@ -60,21 +83,21 @@ export class MapScene extends Phaser.Scene {
 
   private drawCities(): void {
     for (const city of CITIES) {
-      const dot = this.add.circle(city.x, city.y, 12, COLORS.city)
-        .setStrokeStyle(2, COLORS.ink)
+      const img = this.add.image(city.x, city.y + 10, `city_${city.id}`)
+        .setOrigin(0.5, 1)
+        .setScale(0.48)
         .setInteractive({ useHandCursor: true });
-      dot.on('pointerover', () => dot.setFillStyle(COLORS.cityHover));
-      dot.on('pointerout', () => dot.setFillStyle(COLORS.city));
-      dot.on('pointerdown', () => this.onCityClicked(city.id));
+      img.on('pointerover', () => img.setTint(0xffd890));
+      img.on('pointerout', () => img.clearTint());
+      img.on('pointerdown', () => this.onCityClicked(city.id));
 
-      const label = this.add.text(city.x, city.y + 18, city.name, {
+      const label = this.add.text(city.x, city.y + 12, city.name, {
         fontFamily: 'Georgia, serif', fontSize: '16px',
         color: COLORS.uiText, stroke: '#1a1408', strokeThickness: 3,
       }).setOrigin(0.5, 0);
       this.cityLabels.push(label);
     }
-    this.playerMarker = this.add.circle(0, 0, 6, COLORS.player)
-      .setStrokeStyle(2, 0xffffff);
+    this.playerMarker = this.add.image(0, 0, 'icon_wagon').setScale(0.55);
   }
 
   private drawHud(): void {
@@ -107,21 +130,19 @@ export class MapScene extends Phaser.Scene {
     this.assetMarkers = [];
     const s = getState();
     for (const city of CITIES) {
-      let x = city.x - 22;
+      let x = city.x - 32;
+      // Lagerhaus und Manufaktur teilen sich ein Gebäude-Icon.
       if (s.warehouses[city.id]) {
-        this.assetMarkers.push(this.add.rectangle(x, city.y - 12, 9, 9, COLORS.gold)
-          .setStrokeStyle(1, COLORS.ink));
-        x -= 13;
+        this.assetMarkers.push(this.add.image(x, city.y - 16, 'icon_building').setScale(0.5));
+        x -= 17;
       }
       const def = buildingForCity(city.id);
       if (def && s.buildings[def.id]) {
-        this.assetMarkers.push(this.add.triangle(x, city.y - 12, 0, 9, 5, 0, 10, 9, 0x6b5636)
-          .setStrokeStyle(1, COLORS.ink));
-        x -= 13;
+        this.assetMarkers.push(this.add.image(x, city.y - 16, 'icon_building').setScale(0.5));
+        x -= 17;
       }
       if (s.managers[city.id]) {
-        this.assetMarkers.push(this.add.circle(x, city.y - 12, 4, COLORS.player)
-          .setStrokeStyle(1, 0xffffff));
+        this.assetMarkers.push(this.add.image(x, city.y - 15, 'icon_manager').setScale(0.5));
       }
     }
   }
@@ -217,7 +238,7 @@ export class MapScene extends Phaser.Scene {
   private refresh(): void {
     const s = getState();
     const city = getCity(s.cityId);
-    this.playerMarker.setPosition(city.x, city.y - 20);
+    this.playerMarker.setPosition(city.x + 34, city.y + 2);
     this.drawAssetMarkers();
     this.hudDate.setText(dateLabel(s));
     this.hudGold.setText(`${s.gold} Gulden`);
