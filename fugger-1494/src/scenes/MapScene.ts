@@ -8,6 +8,7 @@ import { companyValue, checkMilestones } from '../sim/milestones';
 import mapPng from '../assets/map.png';
 import { sfxEvent, sfxTravel } from '../audio/sfx';
 import { preloadArt } from '../art';
+import { ensureMusic, toggleMusic, musicEnabled } from '../audio/music';
 import augsburgPng from '../assets/cities/augsburg.png';
 import innsbruckPng from '../assets/cities/innsbruck.png';
 import venedigPng from '../assets/cities/venedig.png';
@@ -123,6 +124,19 @@ export class MapScene extends Phaser.Scene {
       ...style, color: COLORS.uiAccent,
     }).setOrigin(1, 0).setDepth(11).setInteractive({ useHandCursor: true });
     wait.on('pointerdown', () => this.passMonth(false));
+
+    this.input.on('pointerdown', () => ensureMusic());
+    const musicBtn = this.add.text(GAME_WIDTH - 24, GAME_HEIGHT - 16, '', {
+      fontFamily: 'Georgia, serif', fontSize: '18px', color: '#e8d9b0',
+      stroke: '#1a1408', strokeThickness: 3,
+    }).setOrigin(1, 1).setDepth(11).setInteractive({ useHandCursor: true });
+    const refreshMusicLabel = () =>
+      musicBtn.setText(`♪ ${musicEnabled() ? 'an' : 'aus'}`);
+    refreshMusicLabel();
+    musicBtn.on('pointerdown', () => {
+      toggleMusic();
+      refreshMusicLabel();
+    });
 
     const chronik = this.add.text(24, GAME_HEIGHT - 16, '📜 Chronik', {
       fontFamily: 'Georgia, serif', fontSize: '18px', color: '#e8d9b0',

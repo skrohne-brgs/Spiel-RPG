@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { newGame, loadGame, hasSave } from '../state';
 import mapPng from '../assets/map.png';
 import { preloadArt } from '../art';
+import { ensureMusic, toggleMusic, musicEnabled } from '../audio/music';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -45,6 +46,19 @@ export class MainMenuScene extends Phaser.Scene {
         if (loadGame()) this.scene.start('MapScene');
       });
     }
+
+    // Musik startet mit der ersten Geste; kleiner Umschalter darunter.
+    this.input.on('pointerdown', () => ensureMusic());
+    const musicBtn = this.add.text(GAME_WIDTH / 2, 578, '', {
+      fontFamily: 'Georgia, serif', fontSize: '15px', color: '#6b5636',
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    const refreshMusicLabel = () =>
+      musicBtn.setText(`♪ Musik: ${musicEnabled() ? 'an' : 'aus'}`);
+    refreshMusicLabel();
+    musicBtn.on('pointerdown', () => {
+      toggleMusic();
+      refreshMusicLabel();
+    });
   }
 
   private makeButton(x: number, y: number, label: string, onClick: () => void): void {

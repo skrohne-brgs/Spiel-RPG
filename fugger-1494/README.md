@@ -99,6 +99,12 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
       Ereignis-Dialoge poppen herein, +/− Gulden schweben beim Handeln,
       Flotten-Fuhrwerke stehen als Mini-Wagen an ihren Städten,
       Wappen schwebt im Hauptmenü
+- [x] Szenen-Hintergründe: Marktplatz, Kontor-Stube, Lagerhalle, Wechselstube,
+      Fuhrhof und Studierzimmer rahmen die Pergament-Panels
+      (Generator: assets-src/bg-generator.mjs)
+- [x] Musik: ruhige Lauten-Schleife (Passamezzo antico, a-Moll), komplett
+      per WebAudio synthetisiert – startet mit der ersten Geste,
+      an-/abschaltbar im Hauptmenü und auf der Karte (gespeichert)
 
 ## Stand (Phase 4 – Politik & Konkurrenz)
 
