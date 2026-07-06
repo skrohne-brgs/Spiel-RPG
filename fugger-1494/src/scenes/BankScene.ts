@@ -5,6 +5,7 @@ import { DEBT_RATE, DEBT_STEP, riskLabel } from '../sim/bank';
 import { PRIVILEGES } from '../sim/politics';
 import { getState, saveGame } from '../state';
 import { sfxCoins } from '../audio/sfx';
+import { preloadArt } from '../art';
 
 const MAX_DEBT = 3000;
 
@@ -15,12 +16,17 @@ export class BankScene extends Phaser.Scene {
     super('BankScene');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
     const s = getState();
     const city = getCity(s.cityId);
     const style = { fontFamily: 'Georgia, serif', fontSize: '18px', color: '#3a2a14' };
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_bank');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 200, GAME_HEIGHT - 60, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 

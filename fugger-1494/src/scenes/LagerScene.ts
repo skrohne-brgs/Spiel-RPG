@@ -29,8 +29,9 @@ export class LagerScene extends Phaser.Scene {
     this.stockCells = [];
     this.cargoCells = [];
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 160, GAME_HEIGHT - 60, COLORS.parchment)
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_lager');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 260, GAME_HEIGHT - 80, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 
     this.header = this.add.text(GAME_WIDTH / 2, 60, '', {

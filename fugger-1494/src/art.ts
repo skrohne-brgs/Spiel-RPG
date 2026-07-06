@@ -22,6 +22,12 @@ import pGold from './assets/portraits/p_gold.png';
 import pKasse from './assets/portraits/p_kasse.png';
 import pSchiff from './assets/portraits/p_schiff.png';
 import wappenPng from './assets/wappen.png';
+import bgMarkt from './assets/bg_markt.png';
+import bgKontor from './assets/bg_kontor.png';
+import bgLager from './assets/bg_lager.png';
+import bgBank from './assets/bg_bank.png';
+import bgFuhrpark from './assets/bg_fuhrpark.png';
+import bgChronik from './assets/bg_chronik.png';
 
 // Alle kleinen Kunst-Assets (Waren-Icons, Porträts, Wappen) zentral
 // registrieren; mehrfach aufrufbar dank exists-Prüfung.
@@ -35,6 +41,8 @@ const ART: Record<string, string> = {
   p_markt: pMarkt, p_partner: pPartner, p_kind: pKind,
   p_gold: pGold, p_kasse: pKasse, p_schiff: pSchiff,
   wappen: wappenPng,
+  bg_markt: bgMarkt, bg_kontor: bgKontor, bg_lager: bgLager,
+  bg_bank: bgBank, bg_fuhrpark: bgFuhrpark, bg_chronik: bgChronik,
 };
 
 export function preloadArt(scene: Phaser.Scene): void {

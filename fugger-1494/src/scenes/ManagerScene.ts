@@ -4,6 +4,7 @@ import { GOODS, getGood } from '../data/goods';
 import { getCity } from '../data/cities';
 import { getPrice } from '../sim/market';
 import { getState, saveGame, ManagerOrders, TradeOrder } from '../state';
+import { preloadArt } from '../art';
 
 const QTY_STEPS = [1, 2, 3, 5, 10];
 
@@ -15,13 +16,18 @@ export class ManagerScene extends Phaser.Scene {
     super('ManagerScene');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
     const s = getState();
     const city = getCity(s.cityId);
     s.managerOrders[s.cityId] ??= { buy: null, sell: null };
     const orders = s.managerOrders[s.cityId];
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_kontor');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 940, 560, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 

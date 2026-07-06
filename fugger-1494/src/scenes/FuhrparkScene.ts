@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY, WAGON_COST, CARTER_WAG
 import { GOODS, getGood } from '../data/goods';
 import { getCity } from '../data/cities';
 import { getState, saveGame, wagonLoad, WagonState } from '../state';
+import { preloadArt } from '../art';
 
 const MAX_WAGONS = 4;
 
@@ -14,12 +15,17 @@ export class FuhrparkScene extends Phaser.Scene {
     super('FuhrparkScene');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
     const s = getState();
     const city = getCity(s.cityId);
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 160, GAME_HEIGHT - 60, COLORS.parchment)
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_fuhrpark');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 260, GAME_HEIGHT - 80, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 
     this.add.text(GAME_WIDTH / 2, 55, `Fuhrpark zu ${city.name} — ${s.gold} Gulden`, {

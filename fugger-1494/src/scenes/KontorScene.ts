@@ -4,6 +4,7 @@ import { getGood } from '../data/goods';
 import { buildingForCity, BuildingDef } from '../data/buildings';
 import { getCity } from '../data/cities';
 import { getState, cargoTotal, saveGame } from '../state';
+import { preloadArt } from '../art';
 
 const TIER_NAMES: Record<number, string> = {
   1: 'Stufe 1 – Förderung',
@@ -21,12 +22,17 @@ export class KontorScene extends Phaser.Scene {
     super('KontorScene');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
     const s = getState();
     const city = getCity(s.cityId);
 
     this.dynamicButtons = [];
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_kontor');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 860, 560, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { MILESTONES, companyValue } from '../sim/milestones';
 import { getState, dateLabel } from '../state';
+import { preloadArt } from '../art';
 
 // Chronik: alle Meilensteine des Handelshauses – erreichte mit vollem
 // Text, offene nur als Andeutung.
@@ -10,10 +11,15 @@ export class ChronikScene extends Phaser.Scene {
     super('ChronikScene');
   }
 
+  preload(): void {
+    preloadArt(this);
+  }
+
   create(): void {
     const s = getState();
 
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
+    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'bg_chronik');
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.22);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 100, GAME_HEIGHT - 60, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold);
 
