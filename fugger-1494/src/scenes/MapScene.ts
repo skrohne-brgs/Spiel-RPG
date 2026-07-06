@@ -162,7 +162,8 @@ export class MapScene extends Phaser.Scene {
     sfxEvent();
     const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.5)
       .setDepth(20).setInteractive();
-    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 560, 280, COLORS.parchment)
+    const panelWidth = event.choices && event.choices.length > 1 ? 800 : 560;
+    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, panelWidth, 280, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold).setDepth(21);
     const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, event.title, {
       fontFamily: 'Georgia, serif', fontSize: '30px', color: '#8a2f1f', fontStyle: 'bold',
@@ -170,16 +171,45 @@ export class MapScene extends Phaser.Scene {
     const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, event.text, {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: '#3a2a14', align: 'center',
     }).setOrigin(0.5).setDepth(22);
+    const buttons: Phaser.GameObjects.Text[] = [];
+    const close = () => {
+      for (const obj of [dim, panel, title, text, ...buttons]) obj.destroy();
+      this.refresh();
+      this.showEvents(events);
+    };
+
+    if (event.choices && event.choices.length > 0) {
+      // Entscheidung: ein Knopf je Wahlmöglichkeit, Abbrechen unmöglich.
+      const n = event.choices.length;
+      event.choices.forEach((choice, i) => {
+        const x = GAME_WIDTH / 2 + (i - (n - 1) / 2) * 300;
+        const usable = choice.enabled !== false;
+        const btn = this.add.text(x, GAME_HEIGHT / 2 + 90, choice.label, {
+          fontFamily: 'Georgia, serif', fontSize: '19px',
+          color: usable ? '#e8d9b0' : '#8a7850',
+          backgroundColor: usable ? '#6b5636' : '#4a3d28',
+          padding: { x: 16, y: 6 },
+        }).setOrigin(0.5).setDepth(22);
+        buttons.push(btn);
+        if (!usable) return;
+        btn.setInteractive({ useHandCursor: true });
+        btn.on('pointerover', () => btn.setBackgroundColor('#8a2f1f'));
+        btn.on('pointerout', () => btn.setBackgroundColor('#6b5636'));
+        btn.on('pointerdown', () => {
+          choice.apply?.(getState());
+          saveGame();
+          close();
+        });
+      });
+      return;
+    }
+
     const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, 'Weiter', {
       fontFamily: 'Georgia, serif', fontSize: '22px',
       color: '#e8d9b0', backgroundColor: '#6b5636',
       padding: { x: 24, y: 6 },
     }).setOrigin(0.5).setDepth(22).setInteractive({ useHandCursor: true });
-    const close = () => {
-      for (const obj of [dim, panel, title, text, btn]) obj.destroy();
-      this.refresh();
-      this.showEvents(events);
-    };
+    buttons.push(btn);
     btn.on('pointerdown', close);
     dim.on('pointerdown', close);
   }

@@ -38,9 +38,18 @@ export function applyTradeImpact(
   state[cityId][goodId] = Math.min(2, Math.max(0.4, state[cityId][goodId] * perUnit ** units));
 }
 
-export function getPrice(state: MarketState, cityId: string, goodId: string): number {
+export function getPrice(
+  state: MarketState, cityId: string, goodId: string,
+  privileges: string[] = [],
+): number {
   const good = GOODS.find((g) => g.id === goodId)!;
   const city = CITIES.find((c) => c.id === cityId)!;
-  const mod = city.priceMod[goodId] ?? 1;
+  let mod = city.priceMod[goodId] ?? 1;
+  if (
+    privileges.includes('monopol_tirol') && cityId === 'innsbruck' &&
+    ['erz', 'kupfer', 'silber'].includes(goodId)
+  ) {
+    mod *= 0.8;
+  }
   return Math.max(1, Math.round(good.basePrice * mod * state[cityId][goodId]));
 }

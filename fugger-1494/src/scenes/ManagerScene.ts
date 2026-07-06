@@ -65,7 +65,7 @@ export class ManagerScene extends Phaser.Scene {
       return;
     }
 
-    const price = getPrice(s.market, s.cityId, order.goodId);
+    const price = getPrice(s.market, s.cityId, order.goodId, s.privileges);
     this.add.text(200, y + 76,
       `Aktueller Marktpreis hier: ${price} fl. – ` +
       (kind === 'buy'

@@ -4,9 +4,18 @@ import { GOODS } from '../data/goods';
 import type { GameState } from '../state';
 import { cargoTotal } from '../state';
 
+// Ereignisse können Entscheidungen anbieten; ohne choices gibt es
+// nur den "Weiter"-Knopf.
+export interface EventChoice {
+  label: string;
+  enabled?: boolean; // false = ausgegraut (z.B. zu wenig Gold)
+  apply?(s: GameState): void;
+}
+
 export interface GameEvent {
   title: string;
   text: string;
+  choices?: EventChoice[];
 }
 
 // Beim Reisen: Gefahr durch Raubritter auf der Route.
@@ -28,6 +37,7 @@ export function rollTravelEvent(s: GameState): GameEvent | null {
     };
   }
 
+  if (s.privileges.includes('zollfreiheit')) return null;
   const toll = Math.min(s.gold, Math.max(5, Math.round(s.gold * 0.08)));
   s.gold -= toll;
   return {

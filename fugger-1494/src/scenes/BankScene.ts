@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { getCity } from '../data/cities';
 import { DEBT_RATE, DEBT_STEP, riskLabel } from '../sim/bank';
+import { PRIVILEGES } from '../sim/politics';
 import { getState, saveGame } from '../state';
 import { sfxCoins } from '../audio/sfx';
 
@@ -24,9 +25,9 @@ export class BankScene extends Phaser.Scene {
       .setStrokeStyle(4, COLORS.gold);
 
     this.add.text(GAME_WIDTH / 2, 60,
-      `Wechselstube zu ${city.name} — ${s.gold} Gulden` +
+      `Wechselstube zu ${city.name} — ${s.gold} Gulden — Ruf: ${s.reputation}/100` +
       (s.debt > 0 ? ` — Schulden: ${s.debt} fl.` : ''), {
-        fontFamily: 'Georgia, serif', fontSize: '26px', color: '#3a2a14', fontStyle: 'bold',
+        fontFamily: 'Georgia, serif', fontSize: '24px', color: '#3a2a14', fontStyle: 'bold',
       }).setOrigin(0.5, 0);
 
     // Kreditgesuche
@@ -40,7 +41,7 @@ export class BankScene extends Phaser.Scene {
         `Der ${offer.name} erbittet ${offer.amount} fl. für ${offer.months} Monate.\n` +
         `Rückzahlung: ${offer.repayment} fl. — Ausfallrisiko: ${riskLabel(offer.riskPct)}`, style);
       if (s.gold >= offer.amount) {
-        this.makeButton(1000, y + 12, 'Gewähren', () => {
+        this.makeButton(600, y + 12, 'Gewähren', () => {
           const st = getState();
           if (st.gold < offer.amount) return;
           st.gold -= offer.amount;
@@ -58,7 +59,7 @@ export class BankScene extends Phaser.Scene {
           this.scene.restart();
         });
       } else {
-        this.add.text(1000, y + 12, 'zu teuer', { ...style, color: '#8a2f1f' }).setOrigin(0.5, 0);
+        this.add.text(600, y + 12, 'zu teuer', { ...style, color: '#8a2f1f' }).setOrigin(0.5, 0);
       }
     });
 
@@ -103,6 +104,36 @@ export class BankScene extends Phaser.Scene {
         this.scene.restart();
       });
     }
+
+    // Privilegien (rechte Spalte)
+    this.add.text(760, 120, 'Privilegien', { ...style, fontSize: '21px', fontStyle: 'bold' });
+    if (s.privileges.includes('kaiserbankier')) {
+      this.add.text(760, 152, '✦ Bankier des Kaisers – bessere Kreditgesuche', { ...style, color: '#8a6a1f' });
+    }
+    PRIVILEGES.forEach((p, i) => {
+      const y = 185 + i * 92;
+      const owned = s.privileges.includes(p.id);
+      this.add.text(760, y,
+        `${owned ? '✦ ' : ''}${p.name}${owned ? '' : ` (${p.cost} fl., Ruf ${p.repReq})`}\n${p.description}`,
+        { ...style, fontSize: '16px', color: owned ? '#8a6a1f' : '#3a2a14',
+          wordWrap: { width: 340 } });
+      if (owned) return;
+      if (s.reputation >= p.repReq && s.gold >= p.cost) {
+        this.makeButton(1000, y + 54, 'Erwerben', () => {
+          const st = getState();
+          if (st.gold < p.cost || st.privileges.includes(p.id)) return;
+          st.gold -= p.cost;
+          st.privileges.push(p.id);
+          sfxCoins();
+          saveGame();
+          this.scene.restart();
+        });
+      } else {
+        this.add.text(1000, y + 54,
+          s.reputation < p.repReq ? 'Ruf zu gering' : 'zu teuer',
+          { ...style, fontSize: '15px', color: '#8a2f1f' }).setOrigin(0.5, 0);
+      }
+    });
 
     this.makeButton(GAME_WIDTH / 2, GAME_HEIGHT - 45, 'Zurück zum Markt', () =>
       this.scene.start('MarketScene'),

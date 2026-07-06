@@ -7,6 +7,7 @@ import { getBuilding, buildingForCity } from './data/buildings';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
 import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
+import { Rival, createRivals, runRivals } from './sim/politics';
 
 export interface BuildingState {
   input: Record<string, number>; // eingelagerte Rohstoffe je Ware
@@ -63,6 +64,9 @@ export interface GameState {
   loans: GivenLoan[]; // an Fürsten vergebene Kredite
   bankOffers: LoanOffer[]; // aktuelle Kreditgesuche (monatlich neu)
   debt: number; // eigenes Darlehen bei der Wechselstube
+  reputation: number; // Ansehen bei Fürsten und Zünften (0..100)
+  privileges: string[]; // erworbene Privilegien
+  rivals: Rival[]; // konkurrierende Handelshäuser
 }
 
 const SAVE_KEY = 'fugger1494-save';
@@ -87,6 +91,9 @@ export function newGame(): GameState {
     loans: [],
     bankOffers: rollOffers(START_GOLD),
     debt: 0,
+    reputation: 10,
+    privileges: [],
+    rivals: createRivals(),
   };
   saveGame();
   return state;
@@ -137,6 +144,9 @@ export function loadGame(): GameState | null {
     state.loans ??= [];
     state.bankOffers ??= [];
     state.debt ??= 0;
+    state.reputation ??= 10;
+    state.privileges ??= [];
+    state.rivals ??= createRivals();
     return state;
   } catch {
     return null;
@@ -185,6 +195,7 @@ export function endTurn(s: GameState): GameEvent[] {
 
   const events: GameEvent[] = [];
   events.push(...processBank(s));
+  events.push(...runRivals(s));
   const upkeep = monthlyUpkeep(s);
   const wasSolvent = s.gold >= 0;
   s.gold -= upkeep;
@@ -194,7 +205,7 @@ export function endTurn(s: GameState): GameEvent[] {
       text: `Unterhalt und Löhne (${upkeep} fl.) übersteigen dein Vermögen.\nDu machst Schulden – verkaufe Waren, um wieder\nflüssig zu werden.`,
     });
   }
-  s.bankOffers = rollOffers(Math.max(0, s.gold));
+  s.bankOffers = rollOffers(Math.max(0, s.gold), s.privileges.includes('kaiserbankier'));
   saveGame();
   return events;
 }
@@ -205,6 +216,7 @@ function produce(s: GameState): void {
   for (const [id, b] of Object.entries(s.buildings)) {
     const def = getBuilding(id);
     let units = def.ratePerMonth;
+    if (id === 'salzbergwerk' && s.privileges.includes('salzregal')) units += 2;
     for (const inp of def.inputs) {
       units = Math.min(units, Math.floor((b.input[inp.good] ?? 0) / inp.qty));
     }
@@ -237,7 +249,7 @@ function runManagers(s: GameState): void {
     const orders = s.managerOrders[cityId];
     if (orders?.sell) {
       const { goodId, limit, qty } = orders.sell;
-      const price = getPrice(s.market, cityId, goodId);
+      const price = getPrice(s.market, cityId, goodId, s.privileges);
       if (price >= limit) {
         const n = Math.min(qty, wh.stock[goodId] ?? 0);
         wh.stock[goodId] = (wh.stock[goodId] ?? 0) - n;
@@ -247,7 +259,7 @@ function runManagers(s: GameState): void {
     }
     if (orders?.buy) {
       const { goodId, limit, qty } = orders.buy;
-      const price = getPrice(s.market, cityId, goodId);
+      const price = getPrice(s.market, cityId, goodId, s.privileges);
       if (price <= limit && s.gold > 0) {
         const space2 = wh.capacity - stockTotal(wh);
         const n = Math.min(qty, space2, Math.floor(s.gold / price));

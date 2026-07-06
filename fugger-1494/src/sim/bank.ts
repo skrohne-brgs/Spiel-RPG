@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import type { GameState } from '../state';
 import type { GameEvent } from './events';
+import { addReputation } from './politics';
 
 // Kredit, den der Spieler einem Fürsten gewährt hat.
 export interface GivenLoan {
@@ -37,14 +38,15 @@ export function riskLabel(riskPct: number): string {
 }
 
 // Monatlich neue Kreditgesuche: 0–2 Stück, skaliert mit dem Firmenwert.
-export function rollOffers(companyValue: number): LoanOffer[] {
+export function rollOffers(companyValue: number, kaiserbankier = false): LoanOffer[] {
   const roll = Math.random();
   const count = roll < 0.2 ? 0 : roll < 0.7 ? 1 : 2;
   const offers: LoanOffer[] = [];
   for (let i = 0; i < count; i++) {
     const base = 300 + Math.random() * 500;
     const scaled = base + companyValue * (0.05 + Math.random() * 0.2);
-    const amount = Math.min(6000, Math.round(scaled / 50) * 50);
+    const amount = Math.min(kaiserbankier ? 10000 : 6000,
+      Math.round(scaled * (kaiserbankier ? 1.5 : 1) / 50) * 50);
     const months = Phaser.Math.RND.pick([6, 9, 12, 18, 24]);
     const interestPct = 12 + Math.random() * 28; // Gesamtzins über die Laufzeit
     const riskPct = Math.round(3 + interestPct * 0.45 + (Math.random() - 0.5) * 4);
@@ -53,7 +55,7 @@ export function rollOffers(companyValue: number): LoanOffer[] {
       amount,
       months,
       repayment: Math.round(amount * (1 + interestPct / 100)),
-      riskPct: Math.max(2, riskPct),
+      riskPct: Math.max(2, riskPct - (kaiserbankier ? 4 : 0)),
     });
   }
   return offers;
@@ -75,6 +77,7 @@ export function processBank(s: GameState): GameEvent[] {
       });
     } else {
       s.gold += loan.repayment;
+      addReputation(s, 3);
       events.push({
         title: 'Kredit zurückgezahlt',
         text: `Der ${loan.name} begleicht seine Schuld:\n${loan.repayment} fl. fließen in deine Kasse\n(${loan.repayment - loan.amount} fl. Zinsgewinn).`,

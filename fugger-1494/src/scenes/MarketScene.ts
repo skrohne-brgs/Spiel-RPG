@@ -70,7 +70,7 @@ export class MarketScene extends Phaser.Scene {
 
   private trade(goodId: string, dir: 1 | -1): void {
     const s = getState();
-    const price = getPrice(s.market, s.cityId, goodId);
+    const price = getPrice(s.market, s.cityId, goodId, s.privileges);
     const held = s.cargo[goodId] ?? 0;
     if (dir > 0) {
       if (s.gold < price || cargoTotal(s) >= WAGON_CAPACITY) return;
@@ -95,7 +95,7 @@ export class MarketScene extends Phaser.Scene {
     );
     for (let i = 0; i < GOODS.length; i++) {
       const good = GOODS[i];
-      this.priceCells[i].setText(`${getPrice(s.market, s.cityId, good.id)} fl.`);
+      this.priceCells[i].setText(`${getPrice(s.market, s.cityId, good.id, s.privileges)} fl.`);
       this.cargoCells[i].setText(String(s.cargo[good.id] ?? 0));
     }
   }

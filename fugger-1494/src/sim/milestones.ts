@@ -30,7 +30,8 @@ export function companyValue(s: GameState): number {
 export interface Milestone {
   id: string;
   when(s: GameState): boolean;
-  event: GameEvent;
+  event: GameEvent; // statischer Text (auch fuer die Chronik)
+  makeEvent?(s: GameState): GameEvent; // dynamische Variante (z.B. mit Entscheidungen)
   apply?(s: GameState): void;
 }
 
@@ -94,6 +95,44 @@ export const MILESTONES: Milestone[] = [
     },
   },
   {
+    id: 'maximilian1519',
+    when: (s) => dateReached(s, 1519, 0), // Januar 1519
+    event: {
+      title: 'Der Kaiser ist tot',
+      text: 'Maximilian I. ist gestorben. In den H\u00f6fen Europas\nbeginnt das Ringen um seine Nachfolge \u2013 und um das\nGeld, mit dem Kurf\u00fcrsten gewonnen werden.',
+    },
+  },
+  {
+    id: 'kaiserwahl1519',
+    when: (s) => dateReached(s, 1519, 5), // Juni 1519
+    event: {
+      title: 'Die Kaiserwahl 1519',
+      text: 'Karl von Habsburg bittet dein Haus, seine Wahl zum\nKaiser zu finanzieren \u2013 wie einst Jakob Fugger.',
+    },
+    makeEvent: (s) => ({
+      title: 'Die Kaiserwahl 1519',
+      text: 'Karl von Habsburg braucht Geld, um die Kurf\u00fcrsten\nf\u00fcr sich zu gewinnen. Finanzierst du seine Wahl,\nwird dein Haus Bankier des Kaisers \u2013 auf ewig.',
+      choices: [
+        {
+          label: 'Wahl finanzieren (15.000 fl.)',
+          enabled: s.gold >= 15000,
+          apply: (st) => {
+            st.gold -= 15000;
+            st.privileges.push('kaiserbankier');
+            st.reputation = 100;
+          },
+        },
+        {
+          label: 'Ablehnen',
+          apply: (st) => {
+            const welser = st.rivals.find((r) => r.id === 'welser');
+            if (welser) welser.wealth = Math.round(welser.wealth * 1.4);
+          },
+        },
+      ],
+    }),
+  },
+  {
     id: 'wert50000',
     when: (s) => companyValue(s) >= 50000,
     event: {
@@ -114,7 +153,7 @@ export function checkMilestones(s: GameState): GameEvent[] {
     if (!m.when(s)) continue;
     s.milestones.push(m.id);
     m.apply?.(s);
-    fired.push(m.event);
+    fired.push(m.makeEvent ? m.makeEvent(s) : m.event);
   }
   return fired;
 }
