@@ -52,8 +52,13 @@ export class KontorScene extends Phaser.Scene {
 
     const s = getState();
     const def = buildingForCity(s.cityId);
+    this.buildManagerButtons();
     if (!def) {
-      this.info.setText('In dieser Stadt gibt es derzeit\nkeine Manufaktur zu erwerben.');
+      this.info.setText(
+        'In dieser Stadt gibt es keine Manufaktur zu erwerben.\n\n' +
+        'Ein Manager kann hier dennoch nützlich sein:\n' +
+        'Mit Lager und Handelsaufträgen wird die Stadt\nzum eigenständigen Handelsposten.',
+      );
       return;
     }
     const owned = s.buildings[def.id];
@@ -98,11 +103,15 @@ export class KontorScene extends Phaser.Scene {
       saveGame();
       this.rebuild();
     });
+  }
 
-    // Manager
+  // Manager anstellen/entlassen und Handelsaufträge – unabhängig davon,
+  // ob es in der Stadt eine Manufaktur gibt.
+  private buildManagerButtons(): void {
+    const s = getState();
     const hired = s.managers[s.cityId] === true;
     this.addButton(
-      GAME_WIDTH / 2, 525,
+      hired ? GAME_WIDTH / 2 - 150 : GAME_WIDTH / 2, 525,
       hired ? 'Manager entlassen' : `Manager anstellen (${MANAGER_WAGE} fl./Monat)`,
       () => {
         const st = getState();
@@ -111,6 +120,11 @@ export class KontorScene extends Phaser.Scene {
         this.rebuild();
       },
     );
+    if (hired) {
+      this.addButton(GAME_WIDTH / 2 + 170, 525, 'Handelsaufträge…', () =>
+        this.scene.start('ManagerScene'),
+      );
+    }
   }
 
   private refreshInfo(def: BuildingDef): void {

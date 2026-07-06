@@ -2,7 +2,7 @@ import {
   START_GOLD, START_YEAR, START_MONTH, MONTH_NAMES, WAGON_CAPACITY,
   WAREHOUSE_STEP, WAREHOUSE_UPKEEP_PER_STEP, MANAGER_WAGE, CARTER_WAGE,
 } from './constants';
-import { MarketState, createMarket, advanceMarket } from './sim/market';
+import { MarketState, createMarket, advanceMarket, getPrice } from './sim/market';
 import { getBuilding, buildingForCity } from './data/buildings';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
@@ -27,6 +27,18 @@ export interface WagonRoute {
   goodBA: string | null;
 }
 
+// Handelsauftrag eines Managers: kauft unter/verkauft über dem Preislimit.
+export interface TradeOrder {
+  goodId: string;
+  limit: number; // Preisgrenze in Gulden
+  qty: number; // maximale Einheiten pro Monat
+}
+
+export interface ManagerOrders {
+  buy: TradeOrder | null;
+  sell: TradeOrder | null;
+}
+
 export interface WagonState {
   cityId: string;
   cargo: Record<string, number>;
@@ -45,6 +57,7 @@ export interface GameState {
   buildings: Record<string, BuildingState>; // gekaufte Manufakturen
   warehouses: Record<string, WarehouseState>; // Lager je Stadt
   managers: Record<string, boolean>; // Manager je Stadt
+  managerOrders: Record<string, ManagerOrders>; // Handelsaufträge je Stadt
   wagons: WagonState[]; // zusätzliche Fuhrwerke (Spielerwagen ist s.cargo)
 }
 
@@ -65,6 +78,7 @@ export function newGame(): GameState {
     buildings: {},
     warehouses: {},
     managers: {},
+    managerOrders: {},
     wagons: [],
   };
   saveGame();
@@ -111,6 +125,7 @@ export function loadGame(): GameState | null {
     }
     state.warehouses ??= {};
     state.managers ??= {};
+    state.managerOrders ??= {};
     state.wagons ??= [];
     return state;
   } catch {
@@ -193,17 +208,42 @@ function produce(s: GameState): void {
 function runManagers(s: GameState): void {
   for (const [cityId, hired] of Object.entries(s.managers)) {
     if (!hired) continue;
-    const def = buildingForCity(cityId);
-    if (!def) continue;
-    const b = s.buildings[def.id];
     const wh = s.warehouses[cityId];
-    if (!b || !wh) continue;
+    if (!wh) continue;
 
-    // Fertigware ins Lager (soweit Platz)
-    const space = wh.capacity - stockTotal(wh);
-    const move = Math.min(b.output, space);
-    b.output -= move;
-    wh.stock[def.outputGood] = (wh.stock[def.outputGood] ?? 0) + move;
+    const def = buildingForCity(cityId);
+    const b = def ? s.buildings[def.id] : undefined;
+    if (def && b) {
+      // Fertigware ins Lager (soweit Platz)
+      const space = wh.capacity - stockTotal(wh);
+      const move = Math.min(b.output, space);
+      b.output -= move;
+      wh.stock[def.outputGood] = (wh.stock[def.outputGood] ?? 0) + move;
+    }
+
+    // Handelsaufträge am Stadtmarkt ausführen
+    const orders = s.managerOrders[cityId];
+    if (orders?.sell) {
+      const { goodId, limit, qty } = orders.sell;
+      const price = getPrice(s.market, cityId, goodId);
+      if (price >= limit) {
+        const n = Math.min(qty, wh.stock[goodId] ?? 0);
+        wh.stock[goodId] = (wh.stock[goodId] ?? 0) - n;
+        s.gold += n * price;
+      }
+    }
+    if (orders?.buy) {
+      const { goodId, limit, qty } = orders.buy;
+      const price = getPrice(s.market, cityId, goodId);
+      if (price <= limit && s.gold > 0) {
+        const space2 = wh.capacity - stockTotal(wh);
+        const n = Math.min(qty, space2, Math.floor(s.gold / price));
+        wh.stock[goodId] = (wh.stock[goodId] ?? 0) + n;
+        s.gold -= n * price;
+      }
+    }
+
+    if (!def || !b) continue;
 
     // Rohstoffe für einen vollen Produktionsmonat nachlegen
     for (const inp of def.inputs) {
