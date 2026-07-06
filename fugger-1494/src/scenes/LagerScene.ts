@@ -6,6 +6,7 @@ import {
 import { GOODS } from '../data/goods';
 import { getCity } from '../data/cities';
 import { getState, cargoTotal, stockTotal, saveGame } from '../state';
+import { preloadArt } from '../art';
 
 // Stadtlager: kaufen, ausbauen und Waren zwischen Spielerwagen und
 // Lager verschieben. Nur in der Stadt des Spielers nutzbar.
@@ -16,6 +17,10 @@ export class LagerScene extends Phaser.Scene {
 
   constructor() {
     super('LagerScene');
+  }
+
+  preload(): void {
+    preloadArt(this);
   }
 
   create(): void {
@@ -62,6 +67,7 @@ export class LagerScene extends Phaser.Scene {
 
     for (let i = 0; i < GOODS.length; i++) {
       const y = 150 + i * 36;
+      this.add.image(138, y + 10, `good_${GOODS[i].id}`).setScale(0.42);
       this.add.text(160, y, GOODS[i].name, colStyle);
       this.stockCells.push(this.add.text(400, y, '', colStyle).setOrigin(1, 0));
       this.cargoCells.push(this.add.text(530, y, '', colStyle).setOrigin(1, 0));

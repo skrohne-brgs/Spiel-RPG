@@ -15,6 +15,7 @@ export interface EventChoice {
 export interface GameEvent {
   title: string;
   text: string;
+  portrait?: string; // Textur-Schlüssel für das Ereignis-Porträt
   choices?: EventChoice[];
 }
 
@@ -33,6 +34,7 @@ export function rollTravelEvent(s: GameState): GameEvent | null {
     const name = GOODS.find((g) => g.id === goodId)!.name;
     return {
       title: 'Raubritter!',
+      portrait: 'p_raubritter',
       text: `Wegelagerer überfallen deinen Wagenzug.\nDu verlierst ${lost}× ${name}.`,
     };
   }
@@ -42,6 +44,7 @@ export function rollTravelEvent(s: GameState): GameEvent | null {
   s.gold -= toll;
   return {
     title: 'Wegzoll',
+      portrait: 'p_raubritter',
     text: `Ein Raubritter verlangt Geleitgeld.\nDu zahlst ${toll} Gulden, um weiterziehen zu dürfen.`,
   };
 }
@@ -57,12 +60,14 @@ export function rollMarketEvent(s: GameState): GameEvent | null {
     s.market[city.id][good.id] = 1.8;
     return {
       title: `Knappheit in ${city.name}`,
+      portrait: 'p_markt',
       text: `Missernte und stockende Lieferungen:\n${good.name} ist in ${city.name} plötzlich sehr gefragt.`,
     };
   }
   s.market[city.id][good.id] = 0.5;
   return {
     title: `Schwemme in ${city.name}`,
+      portrait: 'p_markt',
     text: `Volle Lager drücken den Preis:\n${good.name} ist in ${city.name} kaum noch etwas wert.`,
   };
 }

@@ -6,6 +6,7 @@ import { getPrice, applyTradeImpact } from '../sim/market';
 import { sfxCoins } from '../audio/sfx';
 import { buildingForCity } from '../data/buildings';
 import { getState, cargoTotal, dateLabel, saveGame } from '../state';
+import { preloadArt } from '../art';
 
 // Marktmenü der aktuellen Stadt: kaufen/verkaufen pro Ware.
 export class MarketScene extends Phaser.Scene {
@@ -15,6 +16,10 @@ export class MarketScene extends Phaser.Scene {
 
   constructor() {
     super('MarketScene');
+  }
+
+  preload(): void {
+    preloadArt(this);
   }
 
   create(): void {
@@ -38,6 +43,7 @@ export class MarketScene extends Phaser.Scene {
 
     for (let i = 0; i < GOODS.length; i++) {
       const y = 158 + i * 36;
+      this.add.image(158, y + 10, `good_${GOODS[i].id}`).setScale(0.42);
       this.add.text(180, y, GOODS[i].name, colStyle);
       this.priceCells.push(this.add.text(440, y, '', colStyle).setOrigin(1, 0));
       this.cargoCells.push(this.add.text(580, y, '', colStyle).setOrigin(1, 0));

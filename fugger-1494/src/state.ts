@@ -209,6 +209,7 @@ export function endTurn(s: GameState): GameEvent[] {
   if (wasSolvent && s.gold < 0) {
     events.push({
       title: 'Leere Kassen!',
+      portrait: 'p_kasse',
       text: `Unterhalt und Löhne (${upkeep} fl.) übersteigen dein Vermögen.\nDu machst Schulden – verkaufe Waren, um wieder\nflüssig zu werden.`,
     });
   }

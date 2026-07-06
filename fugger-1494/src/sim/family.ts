@@ -44,6 +44,7 @@ export function checkFamily(s: GameState): GameEvent[] {
     const city = getCity(s.cityId).name;
     events.push({
       title: 'Eine Begegnung',
+      portrait: 'p_partner',
       text: `Auf dem Stadtfest zu ${city} begegnest du\n${name} – klug, wohlhabend und von gutem Namen.\nEin Werben verlangt Geschenke und Geduld.`,
       choices: [
         {
@@ -71,6 +72,7 @@ export function checkFamily(s: GameState): GameEvent[] {
       addReputation(s, 10);
       events.push({
         title: 'Hochzeit!',
+      portrait: 'p_partner',
         text: `Ganz Augsburg feiert deine Vermählung mit ${name}.\nDie Mitgift bringt ${DOWRY} fl., dein Ansehen wächst –\nund dein Ehepartner führt fortan das Augsburger Kontor.`,
       });
     }
@@ -87,6 +89,7 @@ export function checkFamily(s: GameState): GameEvent[] {
     const isFirst = f.children.length === 1;
     events.push({
       title: 'Ein Kind ist geboren',
+      portrait: 'p_kind',
       text: `${f.spouse} schenkt ${isFirst ? 'euch das erste Kind' : 'euch ein weiteres Kind'}:\n${name} Fugger. Die Zukunft des Hauses ist gesichert.`,
     });
   }

@@ -89,6 +89,11 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
       (Generator: assets-src/icons-generator.mjs)
 - [x] Besitz-Icons auf der Karte: Lagerhaus/Manufaktur (gemeinsames
       Gebäude-Icon), Manager-Figur; Spieler als Planwagen
+- [x] Waren-Icons für alle 13 Güter in Markt und Lager
+- [x] Porträts in Ereignis-Dialogen (Fürst, Kaiser, Raubritter, Händler,
+      Partner, Kind, Gold, leere Kasse, Karavelle)
+- [x] Fugger-Wappen (geteilte Lilie in Blau/Gold) im Hauptmenü
+      (Generator: assets-src/icons2-generator.mjs)
 
 ## Stand (Phase 4 – Politik & Konkurrenz)
 

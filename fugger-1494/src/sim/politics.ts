@@ -67,12 +67,14 @@ export function runRivals(s: GameState): GameEvent[] {
       s.market[city.id][good.id] = Math.min(2, s.market[city.id][good.id] * 1.5);
       events.push({
         title: `${rival.name} kaufen auf`,
+      portrait: 'p_markt',
         text: `${rival.name} kaufen alles ${getGood(good.id).name}\nin ${city.name} auf – der Preis springt in die Höhe.`,
       });
     } else {
       s.market[city.id][good.id] = Math.max(0.4, s.market[city.id][good.id] * 0.6);
       events.push({
         title: `${rival.name} fluten den Markt`,
+      portrait: 'p_markt',
         text: `${rival.name} werfen große Mengen ${getGood(good.id).name}\nin ${city.name} auf den Markt – der Preis stürzt ab.`,
       });
     }

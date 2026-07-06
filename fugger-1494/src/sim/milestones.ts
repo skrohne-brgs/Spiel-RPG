@@ -45,6 +45,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => dateReached(s, 1495, 7), // August 1495
     event: {
       title: 'Reichstag zu Worms',
+      portrait: 'p_kaiser',
       text: 'König Maximilian verkündet den Ewigen Landfrieden.\nFehden sind fortan verboten – die Straßen\nwerden sicherer für deine Wagenzüge.',
     },
     apply: (s) => {
@@ -56,6 +57,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => dateReached(s, 1499, 8), // September 1499
     event: {
       title: 'Seeweg nach Indien!',
+      portrait: 'p_schiff',
       text: 'Vasco da Gama ist nach Lissabon zurückgekehrt –\nmit Schiffen voller Pfeffer. Die Gewürzpreise\nin Lissabon brechen ein.',
     },
     apply: (s) => {
@@ -67,6 +69,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => s.flags.kreditVergeben === true,
     event: {
       title: 'Bankier der Fürsten',
+      portrait: 'p_fuerst',
       text: 'Zum ersten Mal leiht dein Haus einem Fürsten Geld.\nWer den Mächtigen Kredit gibt, dem öffnen sich Türen –\nund wer weiß, was sie eines Tages als Pfand bieten.',
     },
   },
@@ -75,6 +78,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => companyValue(s) >= 1000,
     event: {
       title: 'Angesehener Kaufmann',
+      portrait: 'p_gold',
       text: 'Dein Firmenwert übersteigt 1.000 Gulden.\nIn den Kontoren Augsburgs nennt man\ndeinen Namen mit Respekt.',
     },
   },
@@ -83,6 +87,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => companyValue(s) >= 5000,
     event: {
       title: 'Handelsherr',
+      portrait: 'p_gold',
       text: 'Dein Firmenwert übersteigt 5.000 Gulden.\nDie Zünfte hören auf dein Wort,\nund Fürsten grüßen zuerst.',
     },
   },
@@ -91,6 +96,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => companyValue(s) >= 25000,
     event: {
       title: '„Der Reiche“',
+      portrait: 'p_gold',
       text: 'Dein Firmenwert übersteigt 25.000 Gulden.\nGanz Europa spricht von dir, wie einst\nvon Jakob Fugger dem Reichen.',
     },
   },
@@ -99,6 +105,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => dateReached(s, 1519, 0), // Januar 1519
     event: {
       title: 'Der Kaiser ist tot',
+      portrait: 'p_kaiser',
       text: 'Maximilian I. ist gestorben. In den H\u00f6fen Europas\nbeginnt das Ringen um seine Nachfolge \u2013 und um das\nGeld, mit dem Kurf\u00fcrsten gewonnen werden.',
     },
   },
@@ -107,10 +114,12 @@ export const MILESTONES: Milestone[] = [
     when: (s) => dateReached(s, 1519, 5), // Juni 1519
     event: {
       title: 'Die Kaiserwahl 1519',
+      portrait: 'p_kaiser',
       text: 'Karl von Habsburg bittet dein Haus, seine Wahl zum\nKaiser zu finanzieren \u2013 wie einst Jakob Fugger.',
     },
     makeEvent: (s) => ({
       title: 'Die Kaiserwahl 1519',
+      portrait: 'p_kaiser',
       text: 'Karl von Habsburg braucht Geld, um die Kurf\u00fcrsten\nf\u00fcr sich zu gewinnen. Finanzierst du seine Wahl,\nwird dein Haus Bankier des Kaisers \u2013 auf ewig.',
       choices: [
         {
@@ -137,6 +146,7 @@ export const MILESTONES: Milestone[] = [
     when: (s) => companyValue(s) >= 50000,
     event: {
       title: 'Das reichste Haus Europas',
+      portrait: 'p_gold',
       text: 'Fünfzigtausend Gulden! Kein Handelshaus der\nChristenheit ist mächtiger als deines. Du hast\nerreicht, wovon Kaufleute nur träumen – das Spiel\nist gewonnen. Wie es weitergeht, entscheidest du.',
     },
     apply: (s) => {

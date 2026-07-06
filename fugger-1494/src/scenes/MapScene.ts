@@ -7,6 +7,7 @@ import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
 import { companyValue, checkMilestones } from '../sim/milestones';
 import mapPng from '../assets/map.png';
 import { sfxEvent, sfxTravel } from '../audio/sfx';
+import { preloadArt } from '../art';
 import augsburgPng from '../assets/cities/augsburg.png';
 import innsbruckPng from '../assets/cities/innsbruck.png';
 import venedigPng from '../assets/cities/venedig.png';
@@ -48,6 +49,7 @@ export class MapScene extends Phaser.Scene {
     if (!this.textures.exists('icon_building')) this.load.image('icon_building', buildingPng);
     if (!this.textures.exists('icon_manager')) this.load.image('icon_manager', managerPng);
     if (!this.textures.exists('icon_wagon')) this.load.image('icon_wagon', wagonPng);
+    preloadArt(this);
   }
 
   create(): void {
@@ -183,18 +185,26 @@ export class MapScene extends Phaser.Scene {
     sfxEvent();
     const dim = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.5)
       .setDepth(20).setInteractive();
+    const hasPortrait = !!(event.portrait && this.textures.exists(event.portrait));
     const panelWidth = event.choices && event.choices.length > 1 ? 800 : 560;
-    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, panelWidth, 280, COLORS.parchment)
+    const panelHeight = hasPortrait ? 360 : 280;
+    const panel = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, panelWidth, panelHeight, COLORS.parchment)
       .setStrokeStyle(4, COLORS.gold).setDepth(21);
-    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 90, event.title, {
+    const extras: Phaser.GameObjects.GameObject[] = [];
+    if (hasPortrait) {
+      extras.push(this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 118, event.portrait!)
+        .setScale(0.72).setDepth(22));
+    }
+    const title = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + (hasPortrait ? -52 : -90), event.title, {
       fontFamily: 'Georgia, serif', fontSize: '30px', color: '#8a2f1f', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(22);
-    const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20, event.text, {
+    const text = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + (hasPortrait ? 18 : -20), event.text, {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: '#3a2a14', align: 'center',
     }).setOrigin(0.5).setDepth(22);
     const buttons: Phaser.GameObjects.Text[] = [];
+    const btnY = GAME_HEIGHT / 2 + (hasPortrait ? 128 : 90);
     const close = () => {
-      for (const obj of [dim, panel, title, text, ...buttons]) obj.destroy();
+      for (const obj of [dim, panel, title, text, ...extras, ...buttons]) obj.destroy();
       this.refresh();
       this.showEvents(events);
     };
@@ -205,7 +215,7 @@ export class MapScene extends Phaser.Scene {
       event.choices.forEach((choice, i) => {
         const x = GAME_WIDTH / 2 + (i - (n - 1) / 2) * 300;
         const usable = choice.enabled !== false;
-        const btn = this.add.text(x, GAME_HEIGHT / 2 + 90, choice.label, {
+        const btn = this.add.text(x, btnY, choice.label, {
           fontFamily: 'Georgia, serif', fontSize: '19px',
           color: usable ? '#e8d9b0' : '#8a7850',
           backgroundColor: usable ? '#6b5636' : '#4a3d28',
@@ -225,7 +235,7 @@ export class MapScene extends Phaser.Scene {
       return;
     }
 
-    const btn = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90, 'Weiter', {
+    const btn = this.add.text(GAME_WIDTH / 2, btnY, 'Weiter', {
       fontFamily: 'Georgia, serif', fontSize: '22px',
       color: '#e8d9b0', backgroundColor: '#6b5636',
       padding: { x: 24, y: 6 },

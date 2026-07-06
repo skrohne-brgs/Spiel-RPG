@@ -73,6 +73,7 @@ export function processBank(s: GameState): GameEvent[] {
     if (Math.random() * 100 < loan.riskPct) {
       events.push({
         title: 'Kreditausfall!',
+      portrait: 'p_fuerst',
         text: `Der ${loan.name} ist zahlungsunfähig.\nDein Kredit über ${loan.amount} fl. ist verloren –\ndie erhoffte Rückzahlung von ${loan.repayment} fl. bleibt aus.`,
       });
     } else {
@@ -80,6 +81,7 @@ export function processBank(s: GameState): GameEvent[] {
       addReputation(s, 3);
       events.push({
         title: 'Kredit zurückgezahlt',
+      portrait: 'p_fuerst',
         text: `Der ${loan.name} begleicht seine Schuld:\n${loan.repayment} fl. fließen in deine Kasse\n(${loan.repayment - loan.amount} fl. Zinsgewinn).`,
       });
     }

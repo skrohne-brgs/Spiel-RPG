@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { newGame, loadGame, hasSave } from '../state';
 import mapPng from '../assets/map.png';
+import { preloadArt } from '../art';
 
 export class MainMenuScene extends Phaser.Scene {
   constructor() {
@@ -10,31 +11,33 @@ export class MainMenuScene extends Phaser.Scene {
 
   preload(): void {
     if (!this.textures.exists('map')) this.load.image('map', mapPng);
+    preloadArt(this);
   }
 
   create(): void {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, COLORS.uiPanel);
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'map').setAlpha(0.35);
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 640, 460, COLORS.parchment)
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 640, 540, COLORS.parchment)
       .setStrokeStyle(5, COLORS.gold);
 
-    this.add.text(GAME_WIDTH / 2, 200, '1494', {
-      fontFamily: 'Georgia, serif', fontSize: '96px', color: '#8a2f1f', fontStyle: 'bold',
+    this.add.image(GAME_WIDTH / 2, 160, 'wappen').setScale(0.62);
+    this.add.text(GAME_WIDTH / 2, 268, '1494', {
+      fontFamily: 'Georgia, serif', fontSize: '84px', color: '#8a2f1f', fontStyle: 'bold',
     }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH / 2, 290, 'Aufstieg der Fugger', {
+    this.add.text(GAME_WIDTH / 2, 344, 'Aufstieg der Fugger', {
       fontFamily: 'Georgia, serif', fontSize: '32px', color: '#3a2a14',
     }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH / 2, 335, 'Eine Handelssimulation', {
+    this.add.text(GAME_WIDTH / 2, 386, 'Eine Handelssimulation', {
       fontFamily: 'Georgia, serif', fontSize: '18px', color: '#6b5636', fontStyle: 'italic',
     }).setOrigin(0.5);
 
-    this.makeButton(GAME_WIDTH / 2, 420, 'Neues Spiel', () => {
+    this.makeButton(GAME_WIDTH / 2, 455, 'Neues Spiel', () => {
       newGame();
       this.scene.start('MapScene');
     });
 
     if (hasSave()) {
-      this.makeButton(GAME_WIDTH / 2, 480, 'Weiterspielen', () => {
+      this.makeButton(GAME_WIDTH / 2, 515, 'Weiterspielen', () => {
         if (loadGame()) this.scene.start('MapScene');
       });
     }
