@@ -84,5 +84,27 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
       Sandbox läuft danach weiter
 - [x] Hauptmenü mit Kartenhintergrund
 
-Offen: Politik & Konkurrenz-KI (Phase 4), Familie als Nebenschauplatz
-(Phase 6) – Details im Konzeptplan.
+## Stand (Phase 4 – Politik & Konkurrenz)
+
+- [x] Reputation (0–100): wächst mit zurückgezahlten Fürstenkrediten,
+      Hochzeit und Kindern; sichtbar in Bank und Chronik
+- [x] Privilegien in der Wechselstube (Ruf + Gold): Kaiserliche Zollfreiheit,
+      Bergbaumonopol Tirol (−20 % auf Erz/Kupfer/Silber in Innsbruck),
+      Salzregal (+2 Salz/Monat)
+- [x] Ereignisse mit Entscheidungen (Knopf je Option, ausgegraut wenn zu teuer)
+- [x] Set-Piece Kaiserwahl 1519: Karls Wahl für 15.000 fl. finanzieren →
+      „Bankier des Kaisers" (Ruf 100, größere und sicherere Kreditgesuche)
+      oder ablehnen (stärkt die Welser)
+- [x] Rivalen Welser/Medici/Höchstetter: wachsen monatlich, greifen gelegentlich
+      in Märkte ein; Rangliste der Häuser in der Chronik
+
+## Stand (Phase 6 – Familie, Nebenschauplatz)
+
+- [x] Begegnungs-Ereignis (ab 1496, ab 2.000 fl. Firmenwert) mit Entscheidung:
+      Brautwerbung (200 fl.) oder höflich bleiben
+- [x] Hochzeit nach drei Monaten Werbung: +800 fl. Mitgift, +10 Ruf,
+      Ehepartner führt das Augsburger Kontor (Manager dort kostenlos)
+- [x] Kinder als seltene Ereignisse (bis zu vier, je +2 Ruf)
+- [x] Familienstand in der Chronik
+
+Damit sind alle Phasen des Konzeptplans umgesetzt.
