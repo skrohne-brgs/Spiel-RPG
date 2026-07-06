@@ -47,8 +47,8 @@ export class MarketScene extends Phaser.Scene {
       this.add.text(180, y, GOODS[i].name, colStyle);
       this.priceCells.push(this.add.text(440, y, '', colStyle).setOrigin(1, 0));
       this.cargoCells.push(this.add.text(580, y, '', colStyle).setOrigin(1, 0));
-      this.makeButton(720, y, '− Verkaufen', () => this.trade(GOODS[i].id, -1));
-      this.makeButton(880, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1));
+      this.makeButton(720, y, '− Verkaufen', () => this.trade(GOODS[i].id, -1, y));
+      this.makeButton(880, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1, y));
     }
 
     const def = buildingForCity(getState().cityId);
@@ -74,7 +74,7 @@ export class MarketScene extends Phaser.Scene {
     btn.on('pointerdown', onClick);
   }
 
-  private trade(goodId: string, dir: 1 | -1): void {
+  private trade(goodId: string, dir: 1 | -1, rowY = 300): void {
     const s = getState();
     const price = getPrice(s.market, s.cityId, goodId, s.privileges);
     const held = s.cargo[goodId] ?? 0;
@@ -89,8 +89,25 @@ export class MarketScene extends Phaser.Scene {
     }
     applyTradeImpact(s.market, s.cityId, goodId, 1, dir > 0 ? 'buy' : 'sell');
     sfxCoins();
+    this.floatGold(dir > 0 ? -price : price, 1020, rowY + 10);
     saveGame();
     this.refresh();
+  }
+
+  // Kleine schwebende Zahl, die den Goldfluss zeigt.
+  private floatGold(amount: number, x: number, y: number): void {
+    const label = this.add.text(x, y, `${amount > 0 ? '+' : '−'}${Math.abs(amount)} fl.`, {
+      fontFamily: 'Georgia, serif', fontSize: '18px', fontStyle: 'bold',
+      color: amount > 0 ? '#8a6a1f' : '#8a2f1f',
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: label,
+      y: y - 42,
+      alpha: { from: 1, to: 0 },
+      duration: 750,
+      ease: 'Sine.easeOut',
+      onComplete: () => label.destroy(),
+    });
   }
 
   private refresh(): void {

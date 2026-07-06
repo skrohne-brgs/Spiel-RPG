@@ -89,8 +89,14 @@ export class MapScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setScale(0.48)
         .setInteractive({ useHandCursor: true });
-      img.on('pointerover', () => img.setTint(0xffd890));
-      img.on('pointerout', () => img.clearTint());
+      img.on('pointerover', () => {
+        img.setTint(0xffd890);
+        this.tweens.add({ targets: img, scale: 0.56, duration: 120, ease: 'Sine.easeOut' });
+      });
+      img.on('pointerout', () => {
+        img.clearTint();
+        this.tweens.add({ targets: img, scale: 0.48, duration: 120, ease: 'Sine.easeOut' });
+      });
       img.on('pointerdown', () => this.onCityClicked(city.id));
 
       const label = this.add.text(city.x, city.y + 12, city.name, {
@@ -146,6 +152,14 @@ export class MapScene extends Phaser.Scene {
       if (s.managers[city.id]) {
         this.assetMarkers.push(this.add.image(x, city.y - 15, 'icon_manager').setScale(0.5));
       }
+      // Fuhrwerke der eigenen Flotte in dieser Stadt
+      const wagonsHere = s.wagons.filter((w) => w.cityId === city.id).length;
+      for (let i = 0; i < wagonsHere; i++) {
+        this.assetMarkers.push(
+          this.add.image(city.x + 30 + i * 15, city.y - 22, 'icon_wagon')
+            .setScale(0.38).setAlpha(0.95),
+        );
+      }
     }
   }
 
@@ -157,10 +171,44 @@ export class MapScene extends Phaser.Scene {
     }
     const here = getCity(s.cityId);
     if (here.connections.includes(cityId)) {
-      s.cityId = cityId;
-      sfxTravel();
-      this.passMonth(true);
+      this.travelTo(cityId);
     }
+  }
+
+  // Der Planwagen fährt sichtbar zur Zielstadt; solange sind Klicks
+  // gesperrt, die Monatsauswertung folgt erst bei Ankunft.
+  private travelTo(cityId: string): void {
+    const s = getState();
+    const from = getCity(s.cityId);
+    const to = getCity(cityId);
+    s.cityId = cityId;
+    sfxTravel();
+    this.input.enabled = false;
+
+    const dist = Phaser.Math.Distance.Between(from.x, from.y, to.x, to.y);
+    const duration = Phaser.Math.Clamp(dist * 2.4, 500, 1100);
+    this.playerMarker.setFlipX(to.x < from.x);
+    // leichtes Kippeln während der Fahrt
+    const wobble = this.tweens.add({
+      targets: this.playerMarker,
+      angle: { from: -4, to: 4 },
+      duration: 120,
+      yoyo: true,
+      repeat: -1,
+    });
+    this.tweens.add({
+      targets: this.playerMarker,
+      x: to.x + 34,
+      y: to.y + 2,
+      duration,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        wobble.stop();
+        this.playerMarker.setAngle(0).setFlipX(false);
+        this.input.enabled = true;
+        this.passMonth(true);
+      },
+    });
   }
 
   // Ein Monat vergeht (Reise oder Warten); danach werden Ereignisse gewürfelt.
@@ -203,6 +251,16 @@ export class MapScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(22);
     const buttons: Phaser.GameObjects.Text[] = [];
     const btnY = GAME_HEIGHT / 2 + (hasPortrait ? 128 : 90);
+    // Pop-in: Panel skaliert herein, Inhalt blendet ein
+    this.tweens.add({
+      targets: panel, scaleX: { from: 0.9, to: 1 }, scaleY: { from: 0.9, to: 1 },
+      duration: 180, ease: 'Back.easeOut',
+    });
+    const fadeIn = (obj: Phaser.GameObjects.GameObject) =>
+      this.tweens.add({ targets: obj, alpha: { from: 0, to: 1 }, duration: 200 });
+    fadeIn(title);
+    fadeIn(text);
+    for (const e of extras) fadeIn(e);
     const close = () => {
       for (const obj of [dim, panel, title, text, ...extras, ...buttons]) obj.destroy();
       this.refresh();

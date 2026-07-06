@@ -94,6 +94,11 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
       Partner, Kind, Gold, leere Kasse, Karavelle)
 - [x] Fugger-Wappen (geteilte Lilie in Blau/Gold) im Hauptmenü
       (Generator: assets-src/icons2-generator.mjs)
+- [x] Animationen: Planwagen fährt sichtbar zur Zielstadt (mit Kippeln und
+      Blickrichtung, Klicksperre bis Ankunft), Städte wachsen beim Überfahren,
+      Ereignis-Dialoge poppen herein, +/− Gulden schweben beim Handeln,
+      Flotten-Fuhrwerke stehen als Mini-Wagen an ihren Städten,
+      Wappen schwebt im Hauptmenü
 
 ## Stand (Phase 4 – Politik & Konkurrenz)
 

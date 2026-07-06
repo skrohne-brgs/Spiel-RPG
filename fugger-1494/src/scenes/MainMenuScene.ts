@@ -20,7 +20,11 @@ export class MainMenuScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, 640, 540, COLORS.parchment)
       .setStrokeStyle(5, COLORS.gold);
 
-    this.add.image(GAME_WIDTH / 2, 160, 'wappen').setScale(0.62);
+    const wappen = this.add.image(GAME_WIDTH / 2, 160, 'wappen').setScale(0.62);
+    this.tweens.add({
+      targets: wappen, y: 154, duration: 1800,
+      yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+    });
     this.add.text(GAME_WIDTH / 2, 268, '1494', {
       fontFamily: 'Georgia, serif', fontSize: '84px', color: '#8a2f1f', fontStyle: 'bold',
     }).setOrigin(0.5);
