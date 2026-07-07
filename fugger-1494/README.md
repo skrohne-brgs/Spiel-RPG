@@ -141,4 +141,17 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
   das Kontor zeigt Bestände in Manufaktur, Wagen und Stadtlager samt
   Erklärung, wie der Manager Rohstoffe per Handelsauftrag beschafft
 
+## Manufaktur-Ausbau
+
+- Drei Ausbaustufen je Manufaktur: Werkstatt → Manufaktur → Faktorei
+  (Produktionsrate ×1 / ×2 / ×3, Unterhalt ×1 / ×1,5 / ×2, Ausbaukosten
+  80 % bzw. 150 % des Kaufpreises); Managerlohn bleibt fix → Skalenvorteil
+- Faktorei (Stufe 3) verlangt Ruf ≥ 30 (Zünfte dulden Großbetriebe nur
+  bei angesehenen Häusern) und bietet eine einmalige Wahl:
+  *Menge* (Rate ×3) oder *Qualität* (Rate ×2, aber die eigene Ware
+  verkauft/kauft sich in der Manufakturstadt +25 %)
+- Ausbau im Kontor; Stufe, effektive Rate und Unterhalt werden dort
+  angezeigt; Ausbau-Investitionen zählen zum Firmenwert; alte
+  Spielstände starten auf Stufe 1
+
 Damit sind alle Phasen des Konzeptplans umgesetzt.

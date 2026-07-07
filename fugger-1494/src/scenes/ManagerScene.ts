@@ -3,7 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS } from '../constants';
 import { GOODS, getGood } from '../data/goods';
 import { getCity } from '../data/cities';
 import { getPrice } from '../sim/market';
-import { getState, saveGame, ManagerOrders, TradeOrder } from '../state';
+import { getState, saveGame, ManagerOrders, TradeOrder, effectivePrice } from '../state';
 import { preloadArt } from '../art';
 
 const QTY_STEPS = [1, 2, 3, 5, 10];
@@ -71,7 +71,7 @@ export class ManagerScene extends Phaser.Scene {
       return;
     }
 
-    const price = getPrice(s.market, s.cityId, order.goodId, s.privileges);
+    const price = effectivePrice(s, s.cityId, order.goodId);
     this.add.text(200, y + 76,
       `Aktueller Marktpreis hier: ${price} fl. – ` +
       (kind === 'buy'

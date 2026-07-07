@@ -3,7 +3,11 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY, MANAGER_WAGE } from '.
 import { getGood } from '../data/goods';
 import { buildingForCity, BuildingDef } from '../data/buildings';
 import { getCity } from '../data/cities';
-import { getState, cargoTotal, saveGame } from '../state';
+import {
+  getState, cargoTotal, saveGame, effectiveRate, upkeepFactor,
+  LEVEL_NAMES, UPGRADE2_FACTOR, UPGRADE3_FACTOR, UPGRADE3_REP,
+} from '../state';
+import { sfxCoins } from '../audio/sfx';
 import { preloadArt } from '../art';
 
 const TIER_NAMES: Record<number, string> = {
@@ -75,11 +79,45 @@ export class KontorScene extends Phaser.Scene {
         const st = getState();
         if (st.gold < def.cost || st.buildings[def.id]) return;
         st.gold -= def.cost;
-        st.buildings[def.id] = { input: {}, output: 0 };
+        st.buildings[def.id] = { input: {}, output: 0, level: 1, spec: null };
         saveGame();
         this.rebuild();
       });
       return;
+    }
+
+    // Ausbau: Stufe 2 (Manufaktur) bzw. Stufe 3 (Faktorei mit Spezialisierung)
+    if (owned.level === 1) {
+      const cost2 = Math.round(def.cost * UPGRADE2_FACTOR);
+      this.addButton(GAME_WIDTH / 2, 425, `Ausbauen zur Manufaktur (${cost2} fl.)`, () => {
+        const st = getState();
+        const b = st.buildings[def.id];
+        if (st.gold < cost2 || b.level !== 1) return;
+        st.gold -= cost2;
+        b.level = 2;
+        sfxCoins();
+        saveGame();
+        this.rebuild();
+      });
+    } else if (owned.level === 2) {
+      const cost3 = Math.round(def.cost * UPGRADE3_FACTOR);
+      if (s.reputation >= UPGRADE3_REP) {
+        const upgrade = (spec: 'menge' | 'qualitaet') => {
+          const st = getState();
+          const b = st.buildings[def.id];
+          if (st.gold < cost3 || b.level !== 2) return;
+          st.gold -= cost3;
+          b.level = 3;
+          b.spec = spec;
+          sfxCoins();
+          saveGame();
+          this.rebuild();
+        };
+        this.addButton(GAME_WIDTH / 2 - 175, 425,
+          `Faktorei: Menge (${cost3} fl.)`, () => upgrade('menge'));
+        this.addButton(GAME_WIDTH / 2 + 175, 425,
+          `Faktorei: Qualität (${cost3} fl.)`, () => upgrade('qualitaet'));
+      }
     }
 
     // Einlagern je Eingangsware, Abholen der Fertigware
@@ -136,10 +174,11 @@ export class KontorScene extends Phaser.Scene {
   private refreshInfo(def: BuildingDef): void {
     const s = getState();
     const owned = s.buildings[def.id];
+    const rate = owned ? effectiveRate(def.ratePerMonth, owned) : def.ratePerMonth;
     const recipe = def.inputs.length === 0
-      ? `Fördert ${def.ratePerMonth}× ${getGood(def.outputGood).name} im Monat.`
+      ? `Fördert ${rate}× ${getGood(def.outputGood).name} im Monat.`
       : `Verarbeitet ${def.inputs.map((i) => `${i.qty}× ${getGood(i.good).name}`).join(' + ')}` +
-        ` zu 1× ${getGood(def.outputGood).name} (max. ${def.ratePerMonth}/Monat).`;
+        ` zu 1× ${getGood(def.outputGood).name} (max. ${rate}/Monat).`;
 
     if (!owned) {
       this.info.setText(
@@ -171,9 +210,17 @@ export class KontorScene extends Phaser.Scene {
     const flowLine = wh
       ? 'Fertigware wird automatisch ins Stadtlager geliefert (solange Platz ist).'
       : 'Ohne Stadtlager bleibt Fertigware hier zur Abholung liegen.';
+    const levelName = LEVEL_NAMES[owned.level - 1];
+    const specText = owned.level >= 3
+      ? owned.spec === 'qualitaet'
+        ? ` – Qualität: ${getGood(def.outputGood).name} bringt hier +25 %`
+        : ' – Menge'
+      : owned.level === 2 && s.reputation < UPGRADE3_REP
+        ? ` (Faktorei ab Ruf ${UPGRADE3_REP}, aktuell ${s.reputation})`
+        : '';
     this.info.setText(
-      `${def.name} (${TIER_NAMES[def.tier]}, in deinem Besitz)\n` +
-      `${recipe}\nUnterhalt: ${def.upkeep} fl./Monat\n\n` +
+      `${def.name} – ${levelName}${specText}\n` +
+      `${recipe}\nUnterhalt: ${Math.ceil(def.upkeep * upkeepFactor(owned))} fl./Monat\n\n` +
       `${inputLines.join('\n')}${inputLines.length ? '\n' : ''}` +
       `${outLine}\n${flowLine}\n\n${managerLine}`,
     );

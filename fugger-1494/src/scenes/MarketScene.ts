@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
 import { GOODS } from '../data/goods';
 import { getCity } from '../data/cities';
-import { getPrice, applyTradeImpact } from '../sim/market';
+import { applyTradeImpact } from '../sim/market';
 import { sfxCoins } from '../audio/sfx';
 import { buildingForCity } from '../data/buildings';
-import { getState, cargoTotal, dateLabel, saveGame } from '../state';
+import { getState, cargoTotal, dateLabel, saveGame, effectivePrice } from '../state';
 import { preloadArt } from '../art';
 
 // Marktmenü der aktuellen Stadt: kaufen/verkaufen pro Ware.
@@ -77,7 +77,7 @@ export class MarketScene extends Phaser.Scene {
 
   private trade(goodId: string, dir: 1 | -1, rowY = 300): void {
     const s = getState();
-    const price = getPrice(s.market, s.cityId, goodId, s.privileges);
+    const price = effectivePrice(s, s.cityId, goodId);
     const held = s.cargo[goodId] ?? 0;
     if (dir > 0) {
       if (s.gold < price || cargoTotal(s) >= WAGON_CAPACITY) return;
@@ -119,7 +119,7 @@ export class MarketScene extends Phaser.Scene {
     );
     for (let i = 0; i < GOODS.length; i++) {
       const good = GOODS[i];
-      this.priceCells[i].setText(`${getPrice(s.market, s.cityId, good.id, s.privileges)} fl.`);
+      this.priceCells[i].setText(`${effectivePrice(s, s.cityId, good.id)} fl.`);
       this.cargoCells[i].setText(String(s.cargo[good.id] ?? 0));
     }
   }

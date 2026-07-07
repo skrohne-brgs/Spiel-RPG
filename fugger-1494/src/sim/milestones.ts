@@ -14,6 +14,8 @@ export function companyValue(s: GameState): number {
   for (const [id, b] of Object.entries(s.buildings)) {
     const def = getBuilding(id);
     value += def.cost + b.output * getGood(def.outputGood).basePrice + stockValue(b.input);
+    if (b.level >= 2) value += Math.round(def.cost * 0.8);
+    if (b.level >= 3) value += Math.round(def.cost * 1.5);
   }
   for (const w of Object.values(s.warehouses)) {
     const steps = w.capacity / WAREHOUSE_STEP;

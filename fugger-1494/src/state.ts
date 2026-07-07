@@ -11,9 +11,31 @@ import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
 import { Rival, createRivals, runRivals } from './sim/politics';
 import { FamilyState, createFamily, checkFamily } from './sim/family';
 
+// Ausbaustufen: 1 Werkstatt, 2 Manufaktur, 3 Faktorei (mit Spezialisierung).
+export type BuildingSpec = 'menge' | 'qualitaet';
+
 export interface BuildingState {
   input: Record<string, number>; // eingelagerte Rohstoffe je Ware
   output: number; // fertige, abholbare Ware
+  level: number; // Ausbaustufe 1..3
+  spec: BuildingSpec | null; // Spezialisierung ab Stufe 3
+}
+
+export const LEVEL_NAMES = ['Werkstatt', 'Manufaktur', 'Faktorei'];
+export const UPGRADE2_FACTOR = 0.8; // Ausbaukosten relativ zum Kaufpreis
+export const UPGRADE3_FACTOR = 1.5;
+export const UPGRADE3_REP = 30; // Zünfte dulden Faktoreien nur bei gutem Ruf
+export const QUALITY_BONUS = 1.25; // Preisaufschlag in der Manufakturstadt
+
+// Effektive Monatsrate einer Manufaktur nach Stufe und Spezialisierung.
+export function effectiveRate(defRate: number, b: BuildingState): number {
+  if (b.level >= 3) return defRate * (b.spec === 'qualitaet' ? 2 : 3);
+  return defRate * (b.level >= 2 ? 2 : 1);
+}
+
+// Unterhaltsfaktor je Ausbaustufe.
+export function upkeepFactor(b: BuildingState): number {
+  return b.level >= 3 ? 2 : b.level >= 2 ? 1.5 : 1;
 }
 
 export interface WarehouseState {
@@ -144,6 +166,8 @@ export function loadGame(): GameState | null {
         const n = (b as unknown as { input: number }).input;
         b.input = def.inputs.length > 0 ? { [def.inputs[0].good]: n } : {};
       }
+      b.level ??= 1;
+      b.spec ??= null;
     }
     state.warehouses ??= {};
     state.managers ??= {};
@@ -194,7 +218,9 @@ export function dateLabel(s: GameState): string {
 // Monatliche Fixkosten: Manufakturen, Lager, Manager, Fuhrleute.
 export function monthlyUpkeep(s: GameState): number {
   let sum = 0;
-  for (const id of Object.keys(s.buildings)) sum += getBuilding(id).upkeep;
+  for (const [id, b] of Object.entries(s.buildings)) {
+    sum += Math.ceil(getBuilding(id).upkeep * upkeepFactor(b));
+  }
   for (const w of Object.values(s.warehouses)) {
     sum += (w.capacity / WAREHOUSE_STEP) * WAREHOUSE_UPKEEP_PER_STEP;
   }
@@ -241,7 +267,7 @@ export function endTurn(s: GameState): GameEvent[] {
 function produce(s: GameState): void {
   for (const [id, b] of Object.entries(s.buildings)) {
     const def = getBuilding(id);
-    let units = def.ratePerMonth;
+    let units = effectiveRate(def.ratePerMonth, b);
     if (id === 'salzbergwerk' && s.privileges.includes('salzregal')) units += 2;
     for (const inp of def.inputs) {
       units = Math.min(units, Math.floor((b.input[inp.good] ?? 0) / inp.qty));
@@ -284,7 +310,7 @@ function runManagers(s: GameState): void {
     const orders = s.managerOrders[cityId];
     if (orders?.sell) {
       const { goodId, limit, qty } = orders.sell;
-      const price = getPrice(s.market, cityId, goodId, s.privileges);
+      const price = effectivePrice(s, cityId, goodId);
       if (price >= limit) {
         const n = Math.min(qty, wh.stock[goodId] ?? 0);
         wh.stock[goodId] = (wh.stock[goodId] ?? 0) - n;
@@ -294,7 +320,7 @@ function runManagers(s: GameState): void {
     }
     if (orders?.buy) {
       const { goodId, limit, qty } = orders.buy;
-      const price = getPrice(s.market, cityId, goodId, s.privileges);
+      const price = effectivePrice(s, cityId, goodId);
       if (price <= limit && s.gold > 0) {
         const space2 = wh.capacity - stockTotal(wh);
         const n = Math.min(qty, space2, Math.floor(s.gold / price));
@@ -377,6 +403,20 @@ function getCityConnections(cityId: string): string[] {
   } catch {
     return [];
   }
+}
+
+// Marktpreis inklusive Qualitätsaufschlag: eine Qualitäts-Faktorei macht
+// ihre Ware in der eigenen Stadt begehrter (Kauf wie Verkauf).
+export function effectivePrice(s: GameState, cityId: string, goodId: string): number {
+  let price = getPrice(s.market, cityId, goodId, s.privileges);
+  for (const [id, b] of Object.entries(s.buildings)) {
+    const def = getBuilding(id);
+    if (b.level >= 3 && b.spec === 'qualitaet' &&
+        def.outputGood === goodId && def.cityId === cityId) {
+      price = Math.round(price * QUALITY_BONUS);
+    }
+  }
+  return price;
 }
 
 // Wert aller Waren eines Bestands zu Basispreisen.
