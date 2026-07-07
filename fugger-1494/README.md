@@ -129,4 +129,16 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
 - [x] Kinder als seltene Ereignisse (bis zu vier, je +2 Ruf)
 - [x] Familienstand in der Chronik
 
+## Balancing-Runde 1 (Spieler-Feedback)
+
+- Löhne gesenkt: Manager 25→15 fl., Fuhrmann 20→15 fl.; Manufaktur-Unterhalt
+  reduziert; Produktionsraten erhöht (Salzbergwerk 5→8, Veredler 3–4→4–5)
+- Basispreise angehoben: Branntwein 45→60, Arznei 240→280, Schmuck 280→320 –
+  alle Manufakturen amortisieren sich nun in ca. 6–14 Monaten
+- Fuhrwerk-Routen mit 2–4 Stationen (Ringhandel): je Station eine Ladeware,
+  alles wird abgeladen; direkt verbundene Städte 1 Monat Fahrt, sonst 2
+- Fertigware wird automatisch ins Stadtlager geliefert (solange Platz);
+  das Kontor zeigt Bestände in Manufaktur, Wagen und Stadtlager samt
+  Erklärung, wie der Manager Rohstoffe per Handelsauftrag beschafft
+
 Damit sind alle Phasen des Konzeptplans umgesetzt.

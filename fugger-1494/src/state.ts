@@ -4,6 +4,7 @@ import {
 } from './constants';
 import { MarketState, createMarket, advanceMarket, getPrice, applyTradeImpact } from './sim/market';
 import { getBuilding, buildingForCity } from './data/buildings';
+import { getCity } from './data/cities';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
 import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
@@ -20,14 +21,17 @@ export interface WarehouseState {
   stock: Record<string, number>;
 }
 
-// Route eines Fuhrwerks: pendelt zwischen a und b (müssen direkt verbunden
-// sein und dem Spieler gehörende Lager haben). Lädt in a die Hinfracht,
-// in b die Rückfracht (jeweils optional).
+// Route eines Fuhrwerks: 2–4 Stationen mit eigenem Lager, die im Kreis
+// abgefahren werden. An jeder Station wird alles abgeladen und die dort
+// eingestellte Ware geladen. Direkt verbundene Städte kosten einen Monat
+// Fahrt, alle anderen zwei.
+export interface RouteStop {
+  cityId: string;
+  load: string | null; // Ware, die hier geladen wird
+}
+
 export interface WagonRoute {
-  a: string;
-  b: string;
-  goodAB: string | null;
-  goodBA: string | null;
+  stops: RouteStop[];
 }
 
 // Handelsauftrag eines Managers: kauft unter/verkauft über dem Preislimit.
@@ -46,6 +50,7 @@ export interface WagonState {
   cityId: string;
   cargo: Record<string, number>;
   route: WagonRoute | null;
+  transit: { to: string; monthsLeft: number } | null; // längere Fahrten
 }
 
 export interface GameState {
@@ -144,6 +149,19 @@ export function loadGame(): GameState | null {
     state.managers ??= {};
     state.managerOrders ??= {};
     state.wagons ??= [];
+    for (const w of state.wagons) {
+      w.transit ??= null;
+      const legacy = w.route as unknown as
+        { a?: string; b?: string; goodAB?: string | null; goodBA?: string | null } | null;
+      if (legacy && legacy.a && legacy.b) {
+        w.route = {
+          stops: [
+            { cityId: legacy.a, load: legacy.goodAB ?? null },
+            { cityId: legacy.b, load: legacy.goodBA ?? null },
+          ],
+        };
+      }
+    }
     state.loans ??= [];
     state.bankOffers ??= [];
     state.debt ??= 0;
@@ -183,7 +201,7 @@ export function monthlyUpkeep(s: GameState): number {
   sum += Object.entries(s.managers)
     .filter(([cityId, hired]) => hired && !(cityId === 'augsburg' && s.family.spouse))
     .length * MANAGER_WAGE;
-  sum += s.wagons.filter((w) => w.route).length * CARTER_WAGE;
+  sum += s.wagons.filter((w) => w.route && w.route.stops.length >= 2).length * CARTER_WAGE;
   return sum;
 }
 
@@ -232,6 +250,15 @@ function produce(s: GameState): void {
       b.input[inp.good] = (b.input[inp.good] ?? 0) - units * inp.qty;
     }
     b.output += units;
+    // Fertigware wandert direkt ins Stadtlager, soweit dort Platz ist.
+    const wh = s.warehouses[def.cityId];
+    if (wh && b.output > 0) {
+      const move = Math.min(b.output, wh.capacity - stockTotal(wh));
+      if (move > 0) {
+        b.output -= move;
+        wh.stock[def.outputGood] = (wh.stock[def.outputGood] ?? 0) + move;
+      }
+    }
   }
 }
 
@@ -289,38 +316,66 @@ function runManagers(s: GameState): void {
   }
 }
 
-// Fuhrwerke mit Route: am Routenpunkt abladen, Fracht laden, weiterziehen.
+// Fuhrwerke mit Ringroute: an jeder Station alles abladen, die dortige
+// Ware laden und zur nächsten Station ziehen (verbunden: 1 Monat,
+// sonst 2 – der zweite Monat läuft über den Transit-Zähler).
 function runWagons(s: GameState): void {
   for (const w of s.wagons) {
-    if (!w.route) continue;
-    const { a, b } = w.route;
-    if (w.cityId !== a && w.cityId !== b) {
-      // Route wurde unterwegs geändert: erst zum Startpunkt zurückkehren.
-      w.cityId = a;
+    if (!w.route || w.route.stops.length < 2) continue;
+
+    if (w.transit) {
+      w.transit.monthsLeft -= 1;
+      if (w.transit.monthsLeft <= 0) {
+        w.cityId = w.transit.to;
+        w.transit = null;
+      }
       continue;
     }
-    const here = w.cityId;
-    const other = here === a ? b : a;
-    const wh = s.warehouses[here];
+
+    const stops = w.route.stops;
+    const idx = stops.findIndex((st) => st.cityId === w.cityId);
+    if (idx === -1) {
+      // Nicht auf der Route (z.B. gerade geändert): zur ersten Station.
+      travelTo(w, stops[0].cityId);
+      continue;
+    }
+
+    const wh = s.warehouses[w.cityId];
     if (wh) {
       // Alles abladen, soweit das Lager Platz hat.
       for (const [goodId, n] of Object.entries(w.cargo)) {
         if (n <= 0) continue;
-        const space = wh.capacity - stockTotal(wh);
-        const move = Math.min(n, space);
+        const move = Math.min(n, wh.capacity - stockTotal(wh));
         w.cargo[goodId] = n - move;
         wh.stock[goodId] = (wh.stock[goodId] ?? 0) + move;
       }
-      // Fracht für die Weiterfahrt laden.
-      const loadGood = here === a ? w.route.goodAB : w.route.goodBA;
+      // Die hier eingestellte Ware laden.
+      const loadGood = stops[idx].load;
       if (loadGood) {
-        const free = WAGON_CAPACITY - wagonLoad(w);
-        const take = Math.min(free, wh.stock[loadGood] ?? 0);
+        const take = Math.min(WAGON_CAPACITY - wagonLoad(w), wh.stock[loadGood] ?? 0);
         wh.stock[loadGood] = (wh.stock[loadGood] ?? 0) - take;
         w.cargo[loadGood] = (w.cargo[loadGood] ?? 0) + take;
       }
     }
-    w.cityId = other; // ein Monat Fahrt
+    travelTo(w, stops[(idx + 1) % stops.length].cityId);
+  }
+}
+
+// Bewegt ein Fuhrwerk Richtung Ziel: direkte Verbindung = sofort da
+// (ein Monat), sonst bleibt es einen Monat länger unterwegs.
+function travelTo(w: WagonState, to: string): void {
+  if (getCityConnections(w.cityId).includes(to)) {
+    w.cityId = to;
+  } else {
+    w.transit = { to, monthsLeft: 1 };
+  }
+}
+
+function getCityConnections(cityId: string): string[] {
+  try {
+    return getCity(cityId).connections;
+  } catch {
+    return [];
   }
 }
 

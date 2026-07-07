@@ -148,24 +148,34 @@ export class KontorScene extends Phaser.Scene {
       );
       return;
     }
+    const wh = s.warehouses[s.cityId];
+    const stockOf = (goodId: string) => wh ? (wh.stock[goodId] ?? 0) : 0;
     const inputLines = def.inputs.map((i) =>
-      `Eingelagert: ${owned.input[i.good] ?? 0}× ${getGood(i.good).name}` +
-      ` (im Wagen: ${s.cargo[i.good] ?? 0})`,
+      `${getGood(i.good).name}: Manufaktur ${owned.input[i.good] ?? 0}` +
+      ` · Wagen ${s.cargo[i.good] ?? 0} · Stadtlager ${stockOf(i.good)}`,
     );
+    const outLine =
+      `${getGood(def.outputGood).name}: abholbereit ${owned.output}` +
+      ` · Stadtlager ${stockOf(def.outputGood)}` +
+      ` (Wagen frei: ${WAGON_CAPACITY - cargoTotal(s)})`;
     const hired = s.managers[s.cityId] === true;
     const spouseRuns = hired && s.cityId === 'augsburg' && s.family.spouse;
     const managerLine = spouseRuns
-      ? `${s.family.spouse} führt das Kontor persönlich –\nohne Lohn, mit dem Auge der Familie.`
+      ? `${s.family.spouse} führt das Kontor persönlich – ohne Lohn.\n` +
+        'Rohstoffe kommen per Handelsauftrag vom Markt ins Stadtlager\nund von dort in die Manufaktur.'
       : hired
-      ? 'Manager: angestellt – bestückt die Manufaktur aus dem Stadtlager\nund räumt Fertigware dorthin zurück.'
-      : 'Kein Manager: Du musst selbst einlagern und abholen.' +
-        (s.warehouses[s.cityId] ? '' : '\n(Ein Manager braucht zudem ein Lager in dieser Stadt.)');
+      ? 'Manager: bestückt die Manufaktur aus dem Stadtlager.\n' +
+        'Rohstoffe am Markt einkaufen lassen: über „Handelsaufträge…“\n(Einkauf landet im Stadtlager).'
+      : 'Kein Manager: Du musst Rohstoffe selbst einlagern.' +
+        (wh ? '' : '\n(Manager und Fertigware-Ablage brauchen ein Lager in dieser Stadt.)');
+    const flowLine = wh
+      ? 'Fertigware wird automatisch ins Stadtlager geliefert (solange Platz ist).'
+      : 'Ohne Stadtlager bleibt Fertigware hier zur Abholung liegen.';
     this.info.setText(
-      `${def.name} (${TIER_NAMES[def.tier]}, in deinem Besitz)\n${def.description}\n\n` +
+      `${def.name} (${TIER_NAMES[def.tier]}, in deinem Besitz)\n` +
       `${recipe}\nUnterhalt: ${def.upkeep} fl./Monat\n\n` +
       `${inputLines.join('\n')}${inputLines.length ? '\n' : ''}` +
-      `Fertig zur Abholung: ${owned.output}× ${getGood(def.outputGood).name}` +
-      ` (Wagen frei: ${WAGON_CAPACITY - cargoTotal(s)})\n\n${managerLine}`,
+      `${outLine}\n${flowLine}\n\n${managerLine}`,
     );
   }
 
