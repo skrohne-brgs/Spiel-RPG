@@ -4,6 +4,7 @@ import {
   WAREHOUSE_COST, WAREHOUSE_STEP, WAREHOUSE_UPGRADE_COST, WAGON_COST,
 } from '../constants';
 import { stockValue } from '../state';
+import { addReputation } from './politics';
 import type { GameState } from '../state';
 import type { GameEvent } from './events';
 
@@ -76,13 +77,23 @@ export const MILESTONES: Milestone[] = [
     },
   },
   {
+    id: 'hof1496',
+    when: (s) => dateReached(s, 1496, 7), // August 1496
+    event: {
+      title: 'Ein Wink vom Hofe',
+      portrait: 'p_fuerst',
+      text: 'Ein fürstlicher Rat lässt anfragen: Wer Ansehen\nsammelt, dem gewährt der Hof Privilegien – Zollfreiheit,\nMonopole. Ansehen wächst durch Fürstenkredite in der\nWechselstube, durch Wohlstand und eine gute Heirat.',
+    },
+  },
+  {
     id: 'wert1000',
     when: (s) => companyValue(s) >= 1000,
     event: {
       title: 'Angesehener Kaufmann',
       portrait: 'p_gold',
-      text: 'Dein Firmenwert übersteigt 1.000 Gulden.\nIn den Kontoren Augsburgs nennt man\ndeinen Namen mit Respekt.',
+      text: 'Dein Firmenwert übersteigt 1.000 Gulden.\nIn den Kontoren Augsburgs nennt man deinen Namen\nmit Respekt – dein Ansehen wächst (+10).',
     },
+    apply: (s) => addReputation(s, 10),
   },
   {
     id: 'wert5000',
@@ -90,8 +101,9 @@ export const MILESTONES: Milestone[] = [
     event: {
       title: 'Handelsherr',
       portrait: 'p_gold',
-      text: 'Dein Firmenwert übersteigt 5.000 Gulden.\nDie Zünfte hören auf dein Wort,\nund Fürsten grüßen zuerst.',
+      text: 'Dein Firmenwert übersteigt 5.000 Gulden.\nDie Zünfte hören auf dein Wort, Fürsten grüßen\nzuerst – dein Ansehen wächst (+15).',
     },
+    apply: (s) => addReputation(s, 15),
   },
   {
     id: 'wert25000',
@@ -99,8 +111,9 @@ export const MILESTONES: Milestone[] = [
     event: {
       title: '„Der Reiche“',
       portrait: 'p_gold',
-      text: 'Dein Firmenwert übersteigt 25.000 Gulden.\nGanz Europa spricht von dir, wie einst\nvon Jakob Fugger dem Reichen.',
+      text: 'Dein Firmenwert übersteigt 25.000 Gulden.\nGanz Europa spricht von dir, wie einst von Jakob\nFugger dem Reichen – dein Ansehen wächst (+20).',
     },
+    apply: (s) => addReputation(s, 20),
   },
   {
     id: 'maximilian1519',

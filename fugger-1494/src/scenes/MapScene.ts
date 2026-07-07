@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, WAGON_CAPACITY } from '../constants';
-import { CITIES, getCity } from '../data/cities';
+import { CITIES, getCity, travelMonths, isLongRoute } from '../data/cities';
 import { getState, endTurn, dateLabel, cargoTotal, newGame, saveGame, monthlyUpkeep } from '../state';
 import { buildingForCity } from '../data/buildings';
 import { GameEvent, rollTravelEvent, rollMarketEvent } from '../sim/events';
@@ -34,6 +34,7 @@ export class MapScene extends Phaser.Scene {
   private hudValue!: Phaser.GameObjects.Text;
   private hudDate!: Phaser.GameObjects.Text;
   private hudCargo!: Phaser.GameObjects.Text;
+  private hudRep!: Phaser.GameObjects.Text;
   private playerMarker!: Phaser.GameObjects.Image;
   private cityLabels: Phaser.GameObjects.Text[] = [];
   private assetMarkers: Phaser.GameObjects.GameObject[] = [];
@@ -69,9 +70,8 @@ export class MapScene extends Phaser.Scene {
   private drawMap(): void {
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'map');
 
-    // Routen
+    // Routen: kurze Wege durchgezogen (1 Monat), Fernstrecken gestrichelt (2)
     const g = this.add.graphics();
-    g.lineStyle(3, COLORS.route, 0.8);
     const drawn = new Set<string>();
     for (const city of CITIES) {
       for (const targetId of city.connections) {
@@ -79,8 +79,30 @@ export class MapScene extends Phaser.Scene {
         if (drawn.has(key)) continue;
         drawn.add(key);
         const t = getCity(targetId);
-        g.lineBetween(city.x, city.y, t.x, t.y);
+        if (isLongRoute(city.id, targetId)) {
+          this.drawDashedLine(g, city.x, city.y, t.x, t.y);
+        } else {
+          g.lineStyle(3, COLORS.route, 0.8);
+          g.lineBetween(city.x, city.y, t.x, t.y);
+        }
       }
+    }
+  }
+
+  // Gestrichelte Linie für Fernstrecken (2 Monate Reise).
+  private drawDashedLine(g: Phaser.GameObjects.Graphics, x1: number, y1: number, x2: number, y2: number): void {
+    g.lineStyle(3, COLORS.route, 0.7);
+    const total = Phaser.Math.Distance.Between(x1, y1, x2, y2);
+    const dash = 12;
+    const gap = 9;
+    const step = dash + gap;
+    for (let d = 0; d < total; d += step) {
+      const t0 = d / total;
+      const t1 = Math.min((d + dash) / total, 1);
+      g.lineBetween(
+        x1 + (x2 - x1) * t0, y1 + (y2 - y1) * t0,
+        x1 + (x2 - x1) * t1, y1 + (y2 - y1) * t1,
+      );
     }
   }
 
@@ -115,10 +137,11 @@ export class MapScene extends Phaser.Scene {
     const style = {
       fontFamily: 'Georgia, serif', fontSize: '20px', color: COLORS.uiText,
     };
-    this.hudDate = this.add.text(24, 22, '', { ...style, fontSize: '18px' }).setDepth(11);
-    this.hudGold = this.add.text(200, 22, '', { ...style, fontSize: '18px', color: COLORS.uiAccent }).setDepth(11);
-    this.hudValue = this.add.text(390, 22, '', { ...style, fontSize: '18px', color: COLORS.uiDim }).setDepth(11);
-    this.hudCargo = this.add.text(740, 22, '', { ...style, fontSize: '18px' }).setDepth(11);
+    this.hudDate = this.add.text(20, 22, '', { ...style, fontSize: '17px' }).setDepth(11);
+    this.hudGold = this.add.text(178, 22, '', { ...style, fontSize: '17px', color: COLORS.uiAccent }).setDepth(11);
+    this.hudValue = this.add.text(348, 22, '', { ...style, fontSize: '17px', color: COLORS.uiDim }).setDepth(11);
+    this.hudRep = this.add.text(636, 22, '', { ...style, fontSize: '17px', color: '#c9a227' }).setDepth(11);
+    this.hudCargo = this.add.text(790, 22, '', { ...style, fontSize: '17px' }).setDepth(11);
 
     const wait = this.add.text(GAME_WIDTH - 24, 20, '⌛ Monat warten', {
       ...style, color: COLORS.uiAccent,
@@ -195,12 +218,13 @@ export class MapScene extends Phaser.Scene {
     const s = getState();
     const from = getCity(s.cityId);
     const to = getCity(cityId);
+    const months = travelMonths(s.cityId, cityId);
     s.cityId = cityId;
     sfxTravel();
     this.input.enabled = false;
 
     const dist = Phaser.Math.Distance.Between(from.x, from.y, to.x, to.y);
-    const duration = Phaser.Math.Clamp(dist * 2.4, 500, 1100);
+    const duration = Phaser.Math.Clamp(dist * 2.4, 500, 1100) * months;
     this.playerMarker.setFlipX(to.x < from.x);
     // leichtes Kippeln während der Fahrt
     const wobble = this.tweens.add({
@@ -220,22 +244,25 @@ export class MapScene extends Phaser.Scene {
         wobble.stop();
         this.playerMarker.setAngle(0).setFlipX(false);
         this.input.enabled = true;
-        this.passMonth(true);
+        this.passMonth(true, months);
       },
     });
   }
 
-  // Ein Monat vergeht (Reise oder Warten); danach werden Ereignisse gewürfelt.
-  private passMonth(traveled: boolean): void {
+  // Monat(e) vergehen (Reise oder Warten); danach werden Ereignisse gewürfelt.
+  private passMonth(traveled: boolean, months = 1): void {
     const s = getState();
-    const events: GameEvent[] = endTurn(s);
+    const events: GameEvent[] = [];
+    for (let i = 0; i < months; i++) {
+      events.push(...endTurn(s));
+      const m = rollMarketEvent(s);
+      if (m) events.push(m);
+      events.push(...checkMilestones(s));
+    }
     if (traveled) {
       const e = rollTravelEvent(s);
       if (e) events.push(e);
     }
-    const m = rollMarketEvent(s);
-    if (m) events.push(m);
-    events.push(...checkMilestones(s));
     if (events.length > 0) saveGame();
     this.refresh();
     this.showEvents(events);
@@ -327,6 +354,7 @@ export class MapScene extends Phaser.Scene {
     this.hudGold.setColor(s.gold < 0 ? '#d9534f' : '#c9a227');
     const upkeep = monthlyUpkeep(s);
     this.hudValue.setText(`Wert: ${companyValue(s)} fl.${upkeep > 0 ? ` · Kosten: ${upkeep}/Mon.` : ''}`);
+    this.hudRep.setText(`Ruf ${s.reputation}`);
     this.hudCargo.setText(`Fracht ${cargoTotal(s)}/${WAGON_CAPACITY} – in ${city.name} (Klick: Markt)`);
   }
 }

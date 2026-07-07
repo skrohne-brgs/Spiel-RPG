@@ -4,7 +4,7 @@ import {
 } from './constants';
 import { MarketState, createMarket, advanceMarket, getPrice, applyTradeImpact } from './sim/market';
 import { getBuilding, buildingForCity } from './data/buildings';
-import { getCity } from './data/cities';
+import { getCity, travelMonths } from './data/cities';
 import { getGood } from './data/goods';
 import type { GameEvent } from './sim/events';
 import { GivenLoan, LoanOffer, processBank, rollOffers } from './sim/bank';
@@ -387,21 +387,17 @@ function runWagons(s: GameState): void {
   }
 }
 
-// Bewegt ein Fuhrwerk Richtung Ziel: direkte Verbindung = sofort da
-// (ein Monat), sonst bleibt es einen Monat länger unterwegs.
+// Bewegt ein Fuhrwerk Richtung Ziel: die Reisedauer richtet sich nach der
+// Strecke (kurze Wege 1 Monat, Fernstrecken 2). Bei mehr als einem Monat
+// bleibt es die Restzeit im Transit.
 function travelTo(w: WagonState, to: string): void {
-  if (getCityConnections(w.cityId).includes(to)) {
+  const months = getCity(w.cityId).connections.includes(to)
+    ? travelMonths(w.cityId, to)
+    : 2;
+  if (months <= 1) {
     w.cityId = to;
   } else {
-    w.transit = { to, monthsLeft: 1 };
-  }
-}
-
-function getCityConnections(cityId: string): string[] {
-  try {
-    return getCity(cityId).connections;
-  } catch {
-    return [];
+    w.transit = { to, monthsLeft: months - 1 };
   }
 }
 

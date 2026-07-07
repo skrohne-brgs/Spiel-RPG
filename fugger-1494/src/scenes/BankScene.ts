@@ -113,6 +113,8 @@ export class BankScene extends Phaser.Scene {
 
     // Privilegien (rechte Spalte)
     this.add.text(760, 120, 'Privilegien', { ...style, fontSize: '21px', fontStyle: 'bold' });
+    this.add.text(760, 100, 'Ansehen steigt durch Kredite, Wohlstand und Heirat.',
+      { ...style, fontSize: '13px', color: '#6b5636' });
     if (s.privileges.includes('kaiserbankier')) {
       this.add.text(760, 152, '✦ Bankier des Kaisers – bessere Kreditgesuche', { ...style, color: '#8a6a1f' });
     }

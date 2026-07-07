@@ -154,4 +154,16 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
   angezeigt; Ausbau-Investitionen zählen zum Firmenwert; alte
   Spielstände starten auf Stufe 1
 
+## Balancing-Runde 2 (Spieler-Feedback)
+
+- Politik sichtbarer: Ansehen (Ruf) steht jetzt im Karten-HUD; Vermögens-
+  Meilensteine geben Ruf (+10/+15/+20), sodass Privilegien und Faktoreien
+  auch ohne Bankgeschäfte erreichbar werden; frühes Hof-Ereignis (1496)
+  erklärt, wie Ansehen wächst und wozu es dient; Hinweis in der Wechselstube
+- Querverbindungen mit Reisezeit: neue Direktkanten Innsbruck↔Wien (1 Monat),
+  Augsburg↔Krakau und Venedig↔Lissabon (je 2 Monate, Fernstrecke). Kurze Wege
+  durchgezogen, Fernstrecken gestrichelt gezeichnet; Spielerreise und Fuhrwerke
+  brauchen für Fernstrecken zwei Monate. Rom und Lissabon sind keine
+  Sackgassen mehr
+
 Damit sind alle Phasen des Konzeptplans umgesetzt.
