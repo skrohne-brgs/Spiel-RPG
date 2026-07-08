@@ -6,7 +6,7 @@ import { getPrice } from '../sim/market';
 import { getState, saveGame, ManagerOrders, TradeOrder, effectivePrice } from '../state';
 import { preloadArt } from '../art';
 
-const QTY_STEPS = [1, 2, 3, 5, 10];
+const QTY_STEPS = [1, 2, 3, 5, 10, 20, 50, 100];
 
 // Handelsaufträge des Stadt-Managers: je ein Einkaufs- und ein
 // Verkaufsauftrag mit Ware, Preislimit und Monatsmenge. Der Manager

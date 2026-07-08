@@ -5,7 +5,9 @@ import {
 } from '../constants';
 import { GOODS } from '../data/goods';
 import { getCity } from '../data/cities';
-import { getState, cargoTotal, stockTotal, saveGame } from '../state';
+import { applyTradeImpact } from '../sim/market';
+import { sfxCoins } from '../audio/sfx';
+import { getState, cargoTotal, stockTotal, saveGame, effectivePrice } from '../state';
 import { preloadArt } from '../art';
 
 // Stadtlager: kaufen, ausbauen und Waren zwischen Spielerwagen und
@@ -65,6 +67,7 @@ export class LagerScene extends Phaser.Scene {
     this.add.text(330, 116, 'Im Lager', colStyle);
     this.add.text(460, 116, 'Im Wagen', colStyle);
     this.add.text(620, 116, 'Einlagern / Entnehmen', colStyle);
+    this.add.text(1000, 116, 'Verkauf', colStyle);
 
     for (let i = 0; i < GOODS.length; i++) {
       const y = 150 + i * 36;
@@ -77,6 +80,7 @@ export class LagerScene extends Phaser.Scene {
       this.makeSmallButton(720, y, '▶ alle', () => this.move(id, Infinity, 'in'));
       this.makeSmallButton(820, y, '1 ◀', () => this.move(id, 1, 'out'));
       this.makeSmallButton(900, y, 'alle ◀', () => this.move(id, Infinity, 'out'));
+      this.makeSmallButton(1000, y, 'alle €', () => this.sellFromWarehouse(id, y));
     }
 
     this.makeButton(GAME_WIDTH / 2 - 200, GAME_HEIGHT - 45,
@@ -115,6 +119,43 @@ export class LagerScene extends Phaser.Scene {
     }
     saveGame();
     this.refresh();
+  }
+
+  // Verkauft den gesamten Lagerbestand einer Ware zum Marktpreis der Stadt.
+  private sellFromWarehouse(goodId: string, rowY: number): void {
+    const s = getState();
+    const wh = s.warehouses[s.cityId];
+    if (!wh) return;
+    let held = wh.stock[goodId] ?? 0;
+    if (held <= 0) return;
+    let gained = 0;
+    while (held > 0) {
+      const price = effectivePrice(s, s.cityId, goodId);
+      s.gold += price;
+      gained += price;
+      held -= 1;
+      wh.stock[goodId] = held;
+      applyTradeImpact(s.market, s.cityId, goodId, 1, 'sell');
+    }
+    sfxCoins();
+    this.floatGold(gained, 1060, rowY + 10);
+    saveGame();
+    this.refresh();
+  }
+
+  // Kleine schwebende Zahl, die den Goldfluss zeigt.
+  private floatGold(amount: number, x: number, y: number): void {
+    const label = this.add.text(x, y, `+${amount} fl.`, {
+      fontFamily: 'Georgia, serif', fontSize: '17px', fontStyle: 'bold', color: '#8a6a1f',
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: label,
+      y: y - 40,
+      alpha: { from: 1, to: 0 },
+      duration: 750,
+      ease: 'Sine.easeOut',
+      onComplete: () => label.destroy(),
+    });
   }
 
   private refresh(): void {

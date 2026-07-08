@@ -166,4 +166,14 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
   brauchen für Fernstrecken zwei Monate. Rom und Lissabon sind keine
   Sackgassen mehr
 
+## Balancing-Runde 3 (Spieler-Feedback)
+
+- Schnellhandel im Markt: „Alles verkaufen" leert die ganze Wagenladung zum
+  Marktpreis; „Voll ⇑" je Ware kauft, bis der Wagen voll ist oder das Gold
+  nicht mehr reicht (Preis steigt mit jeder Einheit)
+- Manager dürfen mehr als 10 Waren je Monat handeln: Mengenstufen jetzt
+  1/2/3/5/10/20/50/100 pro Monat
+- Direktverkauf aus dem Stadtlager: neue Spalte „Verkauf" mit „alle €" je Ware
+  verkauft den Lagerbestand ohne Umweg über den Wagen
+
 Damit sind alle Phasen des Konzeptplans umgesetzt.

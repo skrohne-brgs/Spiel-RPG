@@ -41,6 +41,7 @@ export class MarketScene extends Phaser.Scene {
     this.add.text(380, 126, 'Preis', colStyle);
     this.add.text(520, 126, 'Im Wagen', colStyle);
     this.add.text(700, 126, 'Handeln', colStyle);
+    this.makeButton(1000, 122, 'Alles verkaufen', () => this.sellAll());
 
     for (let i = 0; i < GOODS.length; i++) {
       const y = 158 + i * 36;
@@ -48,8 +49,9 @@ export class MarketScene extends Phaser.Scene {
       this.add.text(180, y, GOODS[i].name, colStyle);
       this.priceCells.push(this.add.text(440, y, '', colStyle).setOrigin(1, 0));
       this.cargoCells.push(this.add.text(580, y, '', colStyle).setOrigin(1, 0));
-      this.makeButton(720, y, '− Verkaufen', () => this.trade(GOODS[i].id, -1, y));
-      this.makeButton(880, y, '+ Kaufen', () => this.trade(GOODS[i].id, +1, y));
+      this.makeButton(660, y, '− Verk.', () => this.trade(GOODS[i].id, -1, y));
+      this.makeButton(770, y, '+ Kauf', () => this.trade(GOODS[i].id, +1, y));
+      this.makeButton(880, y, 'Voll ⇑', () => this.buyMax(GOODS[i].id, y));
     }
 
     const def = buildingForCity(getState().cityId);
@@ -91,6 +93,48 @@ export class MarketScene extends Phaser.Scene {
     applyTradeImpact(s.market, s.cityId, goodId, 1, dir > 0 ? 'buy' : 'sell');
     sfxCoins();
     this.floatGold(dir > 0 ? -price : price, 1020, rowY + 10);
+    saveGame();
+    this.refresh();
+  }
+
+  // Kauft so viele Einheiten dieser Ware, bis der Wagen voll ist oder das
+  // Gold nicht mehr reicht. Der Preis steigt mit jeder Einheit.
+  private buyMax(goodId: string, rowY: number): void {
+    const s = getState();
+    let spent = 0;
+    for (;;) {
+      const price = effectivePrice(s, s.cityId, goodId);
+      if (s.gold < price || cargoTotal(s) >= WAGON_CAPACITY) break;
+      s.gold -= price;
+      s.cargo[goodId] = (s.cargo[goodId] ?? 0) + 1;
+      applyTradeImpact(s.market, s.cityId, goodId, 1, 'buy');
+      spent += price;
+    }
+    if (spent === 0) return;
+    sfxCoins();
+    this.floatGold(-spent, 1020, rowY + 10);
+    saveGame();
+    this.refresh();
+  }
+
+  // Verkauft die gesamte Wagenladung (alle Waren) zum jeweiligen Marktpreis.
+  private sellAll(): void {
+    const s = getState();
+    let gained = 0;
+    for (const good of GOODS) {
+      let held = s.cargo[good.id] ?? 0;
+      while (held > 0) {
+        const price = effectivePrice(s, s.cityId, good.id);
+        s.gold += price;
+        gained += price;
+        held -= 1;
+        s.cargo[good.id] = held;
+        applyTradeImpact(s.market, s.cityId, good.id, 1, 'sell');
+      }
+    }
+    if (gained === 0) return;
+    sfxCoins();
+    this.floatGold(gained, 1060, 150);
     saveGame();
     this.refresh();
   }
