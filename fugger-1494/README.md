@@ -168,9 +168,10 @@ und Fuhrleute, die vorher Aufträge bekommen haben.
 
 ## Balancing-Runde 3 (Spieler-Feedback)
 
-- Schnellhandel im Markt: „Alles verkaufen" leert die ganze Wagenladung zum
-  Marktpreis; „Voll ⇑" je Ware kauft, bis der Wagen voll ist oder das Gold
-  nicht mehr reicht (Preis steigt mit jeder Einheit)
+- Schnellhandel im Markt: „Wagen verkaufen" leert nur die Wagenladung,
+  „Alles verkaufen" zusätzlich das Stadtlager – beides zum Marktpreis;
+  „Voll ⇑" je Ware kauft, bis der Wagen voll ist oder das Gold nicht mehr
+  reicht (Preis steigt/fällt mit jeder Einheit)
 - Manager dürfen mehr als 10 Waren je Monat handeln: Mengenstufen jetzt
   1/2/3/5/10/20/50/100 pro Monat
 - Direktverkauf aus dem Stadtlager: neue Spalte „Verkauf" mit „alle €" je Ware

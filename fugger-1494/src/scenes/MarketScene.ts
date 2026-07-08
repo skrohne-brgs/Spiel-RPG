@@ -41,7 +41,8 @@ export class MarketScene extends Phaser.Scene {
     this.add.text(380, 126, 'Preis', colStyle);
     this.add.text(520, 126, 'Im Wagen', colStyle);
     this.add.text(700, 126, 'Handeln', colStyle);
-    this.makeButton(1000, 122, 'Alles verkaufen', () => this.sellAll());
+    this.makeButton(985, 122, 'Wagen verkaufen', () => this.sellWagon());
+    this.makeButton(985, 160, 'Alles verkaufen', () => this.sellAll());
 
     for (let i = 0; i < GOODS.length; i++) {
       const y = 158 + i * 36;
@@ -117,24 +118,44 @@ export class MarketScene extends Phaser.Scene {
     this.refresh();
   }
 
-  // Verkauft die gesamte Wagenladung (alle Waren) zum jeweiligen Marktpreis.
-  private sellAll(): void {
+  // Verkauft einen kompletten Warenbestand (alle Güter) zum Marktpreis und
+  // gibt den Erlös zurück. Der Preis fällt mit jeder verkauften Einheit.
+  private sellStore(store: Record<string, number>): number {
     const s = getState();
     let gained = 0;
     for (const good of GOODS) {
-      let held = s.cargo[good.id] ?? 0;
+      let held = store[good.id] ?? 0;
       while (held > 0) {
         const price = effectivePrice(s, s.cityId, good.id);
         s.gold += price;
         gained += price;
         held -= 1;
-        s.cargo[good.id] = held;
+        store[good.id] = held;
         applyTradeImpact(s.market, s.cityId, good.id, 1, 'sell');
       }
     }
+    return gained;
+  }
+
+  // Verkauft nur die Wagenladung.
+  private sellWagon(): void {
+    const gained = this.sellStore(getState().cargo);
+    this.finishSale(gained);
+  }
+
+  // Verkauft Wagenladung und – falls vorhanden – das Stadtlager.
+  private sellAll(): void {
+    const s = getState();
+    let gained = this.sellStore(s.cargo);
+    const wh = s.warehouses[s.cityId];
+    if (wh) gained += this.sellStore(wh.stock);
+    this.finishSale(gained);
+  }
+
+  private finishSale(gained: number): void {
     if (gained === 0) return;
     sfxCoins();
-    this.floatGold(gained, 1060, 150);
+    this.floatGold(gained, 1060, 200);
     saveGame();
     this.refresh();
   }
